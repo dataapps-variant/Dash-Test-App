@@ -315,7 +315,7 @@ def create_landing_layout(user, theme="dark"):
                         dbc.DropdownMenuItem(divider=True),
                         dbc.DropdownMenuItem("🚪 Logout", id="logout-btn")
                     ],
-                    align="end",
+                    
                     color="secondary"
                 )
             ], width=1)
@@ -384,7 +384,7 @@ def create_icarus_historical_layout(user, theme="dark"):
                         dbc.DropdownMenuItem(f"User: {user['name']}" if user else "User: --", disabled=True),
                         dbc.DropdownMenuItem("🚪 Logout", id="dashboard-logout-btn")
                     ],
-                    align="end",
+                    
                     color="secondary"
                 )
             ], width=2, style={"textAlign": "right"})
