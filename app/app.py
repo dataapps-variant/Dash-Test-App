@@ -15,7 +15,7 @@ import os
 from datetime import datetime, date
 from flask import Flask, request, make_response, redirect
 import dash
-from dash import Dash, html, dcc, callback, Input, Output, State, ALL, MATCH, ctx, no_update
+from dash import Dash, html, dcc, callback, Input, Output, State, ALL, MATCH, ctx, no_update, clientside_callback
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 import pandas as pd
@@ -289,7 +289,7 @@ def create_landing_layout(user, theme="dark"):
         dashboard_buttons.append(
             dbc.Button(
                 f"📊 {dashboard['name']}",
-                id={"type": "nav-dashboard", "index": dashboard["id"]},
+                id=f"nav-btn-{dashboard['id']}",
                 color="primary",
                 className="me-2 mb-2"
             )
@@ -660,10 +660,10 @@ app.layout = html.Div([
     Input('theme-store', 'data')
 )
 def update_css(theme):
-    """CSS is loaded from assets/style.css - this callback is a placeholder for future theme switching"""
-    # Theme switching would require a more complex solution (CSS variables or page refresh)
-    # For now, dark theme is applied via static CSS in assets/style.css
-    return html.Div()  # Return empty div
+    """Update body class based on theme"""
+    # We can't inject CSS directly, but layouts will re-render with new theme
+    # The inline styles in layouts will handle theming
+    return html.Div(id='theme-indicator', **{'data-theme': theme or 'dark'})
 
 
 @callback(
@@ -727,14 +727,13 @@ def handle_login(n_clicks, username, password, remember_me):
     prevent_initial_call=True
 )
 def handle_logout(n1, n2, session_data):
-    """Handle logout"""
-    if not ctx.triggered_id:
-        return no_update, no_update
-    
-    if session_data and session_data.get('session_id'):
-        logout(session_data['session_id'])
-    
-    return {}, 'login'
+    """Handle logout from any page"""
+    triggered = ctx.triggered_id
+    if triggered in ["logout-btn", "dashboard-logout-btn"]:
+        if session_data and session_data.get('session_id'):
+            logout(session_data['session_id'])
+        return {}, 'login'
+    return no_update, no_update
 
 
 @callback(
@@ -747,32 +746,35 @@ def handle_logout(n1, n2, session_data):
 )
 def toggle_theme(n1, n2, n3, current_theme):
     """Toggle between dark and light theme"""
-    if not ctx.triggered_id:
-        return no_update
-    
-    return "light" if current_theme == "dark" else "dark"
+    triggered = ctx.triggered_id
+    if triggered in ["login-theme-toggle", "landing-theme-toggle", "dashboard-theme-toggle"]:
+        new_theme = "light" if current_theme == "dark" else "dark"
+        return new_theme
+    return no_update
 
 
 @callback(
     Output('page-store', 'data'),
-    Input({'type': 'nav-dashboard', 'index': ALL}, 'n_clicks'),
-    Input('back-to-landing', 'n_clicks'),
-    State('session-store', 'data'),
+    Input('nav-btn-icarus_historical', 'n_clicks'),
     prevent_initial_call=True
 )
-def navigate(dashboard_clicks, back_click, session_data):
-    """Handle navigation between pages"""
-    if not ctx.triggered_id:
-        return no_update
-    
-    triggered = ctx.triggered_id
-    
-    if triggered == "back-to-landing":
+def navigate_to_icarus(n_clicks):
+    """Handle navigation to ICARUS dashboard"""
+    if n_clicks:
+        return "icarus_historical"
+    return no_update
+
+
+# Separate callback for back button (on dashboard page)
+@callback(
+    Output('page-store', 'data', allow_duplicate=True),
+    Input('back-to-landing', 'n_clicks'),
+    prevent_initial_call=True
+)
+def navigate_back(back_click):
+    """Handle back button navigation"""
+    if back_click:
         return "landing"
-    
-    if isinstance(triggered, dict) and triggered.get("type") == "nav-dashboard":
-        return triggered["index"]
-    
     return no_update
 
 
