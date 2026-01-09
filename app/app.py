@@ -189,7 +189,7 @@ def create_login_layout(theme="dark"):
         html.Div([
             dbc.Button(
                 "☀️ Light" if theme == "dark" else "🌙 Dark",
-                id="login-theme-toggle",
+                id="theme-toggle-btn",
                 color="secondary",
                 size="sm"
             )
@@ -298,17 +298,20 @@ def create_landing_layout(user, theme="dark"):
     return html.Div([
         # Header with menu
         dbc.Row([
-            dbc.Col(width=10),
+            dbc.Col(width=9),
             dbc.Col([
+                dbc.Button(
+                    "☀️" if theme == "dark" else "🌙",
+                    id="theme-toggle-btn",
+                    color="secondary",
+                    size="sm",
+                    className="me-2",
+                    title="Toggle Light/Dark Mode"
+                ),
                 dbc.Button("🚪 Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
                 dbc.DropdownMenu(
                     label="⋮",
                     children=[
-                        dbc.DropdownMenuItem(
-                            "☀️ Light Mode" if theme == "dark" else "🌙 Dark Mode",
-                            id="landing-theme-toggle"
-                        ),
-                        dbc.DropdownMenuItem(divider=True),
                         dbc.DropdownMenuItem("🔧 Admin Panel", id="admin-panel-btn") if user and user.get("role") == "admin" else None,
                         dbc.DropdownMenuItem(divider=True) if user and user.get("role") == "admin" else None,
                         dbc.DropdownMenuItem(f"User: {user['name']}", disabled=True) if user else None,
@@ -317,7 +320,7 @@ def create_landing_layout(user, theme="dark"):
                     
                     color="secondary"
                 )
-            ], width=2, style={"textAlign": "right"})
+            ], width=3, style={"textAlign": "right"})
         ], className="mb-3"),
         
         # Logo and welcome
@@ -370,16 +373,19 @@ def create_icarus_historical_layout(user, theme="dark"):
                 )
             ], width=8),
             dbc.Col([
-                dbc.Button("🚪 Logout", id="dashboard-logout-btn", color="secondary", size="sm", className="me-2"),
+                dbc.Button(
+                    "☀️" if theme == "dark" else "🌙",
+                    id="theme-toggle-btn",
+                    color="secondary",
+                    size="sm",
+                    className="me-2",
+                    title="Toggle Light/Dark Mode"
+                ),
+                dbc.Button("🚪 Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
                 dbc.DropdownMenu(
                     label="⋮",
                     children=[
                         dbc.DropdownMenuItem("📄 Export Full Dashboard as PDF", disabled=True),
-                        dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem(
-                            "☀️ Light Mode" if theme == "dark" else "🌙 Dark Mode",
-                            id="dashboard-theme-toggle"
-                        ),
                         dbc.DropdownMenuItem(divider=True),
                         dbc.DropdownMenuItem(f"User: {user['name']}" if user else "User: --", disabled=True),
                     ],
@@ -721,14 +727,12 @@ def handle_login(n_clicks, username, password, remember_me):
     Output('session-store', 'data', allow_duplicate=True),
     Output('page-store', 'data', allow_duplicate=True),
     Input('logout-btn', 'n_clicks'),
-    Input('dashboard-logout-btn', 'n_clicks'),
     State('session-store', 'data'),
     prevent_initial_call=True
 )
-def handle_logout(n1, n2, session_data):
-    """Handle logout from any page"""
-    triggered = ctx.triggered_id
-    if triggered in ["logout-btn", "dashboard-logout-btn"]:
+def handle_logout(n_clicks, session_data):
+    """Handle logout"""
+    if n_clicks:
         if session_data and session_data.get('session_id'):
             logout(session_data['session_id'])
         return {}, 'login'
@@ -737,16 +741,13 @@ def handle_logout(n1, n2, session_data):
 
 @callback(
     Output('theme-store', 'data'),
-    Input('login-theme-toggle', 'n_clicks'),
-    Input('landing-theme-toggle', 'n_clicks'),
-    Input('dashboard-theme-toggle', 'n_clicks'),
+    Input('theme-toggle-btn', 'n_clicks'),
     State('theme-store', 'data'),
     prevent_initial_call=True
 )
-def toggle_theme(n1, n2, n3, current_theme):
+def toggle_theme(n_clicks, current_theme):
     """Toggle between dark and light theme"""
-    triggered = ctx.triggered_id
-    if triggered in ["login-theme-toggle", "landing-theme-toggle", "dashboard-theme-toggle"]:
+    if n_clicks:
         new_theme = "light" if current_theme == "dark" else "dark"
         return new_theme
     return no_update
