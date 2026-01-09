@@ -581,7 +581,7 @@ def create_admin_layout(theme="dark"):
     return dbc.Modal([
         dbc.ModalHeader([
             dbc.ModalTitle("Admin Panel"),
-            dbc.Button("✕", id="close-admin-modal", close=True, className="ms-auto")
+            dbc.Button("✕", id="close-admin-modal", color="light", size="sm", className="ms-auto")
         ]),
         dbc.ModalBody([
             # Users section
