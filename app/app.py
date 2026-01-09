@@ -298,8 +298,9 @@ def create_landing_layout(user, theme="dark"):
     return html.Div([
         # Header with menu
         dbc.Row([
-            dbc.Col(width=11),
+            dbc.Col(width=10),
             dbc.Col([
+                dbc.Button("🚪 Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
                 dbc.DropdownMenu(
                     label="⋮",
                     children=[
@@ -312,13 +313,11 @@ def create_landing_layout(user, theme="dark"):
                         dbc.DropdownMenuItem(divider=True) if user and user.get("role") == "admin" else None,
                         dbc.DropdownMenuItem(f"User: {user['name']}", disabled=True) if user else None,
                         dbc.DropdownMenuItem(f"Role: {'Admin' if user and user.get('role') == 'admin' else 'Read Only'}", disabled=True) if user else None,
-                        dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem("🚪 Logout", id="logout-btn")
                     ],
                     
                     color="secondary"
                 )
-            ], width=1)
+            ], width=2, style={"textAlign": "right"})
         ], className="mb-3"),
         
         # Logo and welcome
@@ -371,6 +370,7 @@ def create_icarus_historical_layout(user, theme="dark"):
                 )
             ], width=8),
             dbc.Col([
+                dbc.Button("🚪 Logout", id="dashboard-logout-btn", color="secondary", size="sm", className="me-2"),
                 dbc.DropdownMenu(
                     label="⋮",
                     children=[
@@ -382,7 +382,6 @@ def create_icarus_historical_layout(user, theme="dark"):
                         ),
                         dbc.DropdownMenuItem(divider=True),
                         dbc.DropdownMenuItem(f"User: {user['name']}" if user else "User: --", disabled=True),
-                        dbc.DropdownMenuItem("🚪 Logout", id="dashboard-logout-btn")
                     ],
                     
                     color="secondary"
@@ -817,11 +816,12 @@ def load_active_tab(active_tab, session_data, theme):
         
         return html.Div([
             create_filters_layout(plan_groups, date_bounds["min_date"], date_bounds["max_date"], "active", theme),
-            html.Br(),
+            html.Div([
+                dbc.Button("Load Data", id="active-load-btn", color="primary", className="mt-3 mb-3")
+            ], style={"textAlign": "center"}),
+            html.Hr(),
             html.Div(id="active-pivot-container"),
-            html.Br(),
-            html.Div(id="active-charts-container"),
-            dbc.Button("Load Data", id="active-load-btn", color="primary", className="mt-3")
+            html.Div(id="active-charts-container")
         ])
     except Exception as e:
         return dbc.Alert(f"Error loading data: {str(e)}", color="danger")
@@ -850,11 +850,12 @@ def load_inactive_tab(active_tab, session_data, theme):
         
         return html.Div([
             create_filters_layout(plan_groups, date_bounds["min_date"], date_bounds["max_date"], "inactive", theme),
-            html.Br(),
+            html.Div([
+                dbc.Button("Load Data", id="inactive-load-btn", color="primary", className="mt-3 mb-3")
+            ], style={"textAlign": "center"}),
+            html.Hr(),
             html.Div(id="inactive-pivot-container"),
-            html.Br(),
-            html.Div(id="inactive-charts-container"),
-            dbc.Button("Load Data", id="inactive-load-btn", color="primary", className="mt-3")
+            html.Div(id="inactive-charts-container")
         ])
     except Exception as e:
         return dbc.Alert(f"Error loading data: {str(e)}", color="danger")
@@ -966,12 +967,12 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
                     dbc.Col([
                         html.H6(display_title, style={"color": colors["text_primary"]}),
                         create_legend_component(plans_regular, color_map_regular, theme) if plans_regular else None,
-                        dcc.Graph(figure=fig_regular, config=get_chart_config())
+                        dcc.Graph(figure=fig_regular, config=get_chart_config(), style={"height": "350px"})
                     ], width=6),
                     dbc.Col([
                         html.H6(f"{display_title} (Crystal Ball)", style={"color": colors["text_primary"]}),
                         create_legend_component(plans_crystal, color_map_crystal, theme) if plans_crystal else None,
-                        dcc.Graph(figure=fig_crystal, config=get_chart_config())
+                        dcc.Graph(figure=fig_crystal, config=get_chart_config(), style={"height": "350px"})
                     ], width=6)
                 ], className="mb-4")
             )
@@ -1088,12 +1089,12 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
                     dbc.Col([
                         html.H6(display_title, style={"color": colors["text_primary"]}),
                         create_legend_component(plans_regular, color_map_regular, theme) if plans_regular else None,
-                        dcc.Graph(figure=fig_regular, config=get_chart_config())
+                        dcc.Graph(figure=fig_regular, config=get_chart_config(), style={"height": "350px"})
                     ], width=6),
                     dbc.Col([
                         html.H6(f"{display_title} (Crystal Ball)", style={"color": colors["text_primary"]}),
                         create_legend_component(plans_crystal, color_map_crystal, theme) if plans_crystal else None,
-                        dcc.Graph(figure=fig_crystal, config=get_chart_config())
+                        dcc.Graph(figure=fig_crystal, config=get_chart_config(), style={"height": "350px"})
                     ], width=6)
                 ], className="mb-4")
             )
