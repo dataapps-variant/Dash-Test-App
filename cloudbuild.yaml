@@ -1,0 +1,74 @@
+# Cloud Build configuration for Variant Dashboard - Dash Version
+# Key improvements over Streamlit:
+# 1. Better concurrency support (Dash is stateless)
+# 2. Gunicorn with multiple workers
+# 3. Standard HTTP health checks
+
+steps:
+  # Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/variant-dashboard:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/variant-dashboard:latest'
+      - '.'
+
+  # Push images
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/variant-dashboard:$COMMIT_SHA']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/variant-dashboard:latest']
+
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args:
+      - 'run'
+      - 'deploy'
+      - 'variant-dashboard'
+      - '--image'
+      - 'gcr.io/$PROJECT_ID/variant-dashboard:$COMMIT_SHA'
+      - '--region'
+      - 'us-central1'
+      - '--platform'
+      - 'managed'
+      # Memory for data caching
+      - '--memory'
+      - '4Gi'
+      # 2 CPUs
+      - '--cpu'
+      - '2'
+      # Request timeout
+      - '--timeout'
+      - '300'
+      # Higher concurrency for Dash (stateless)
+      - '--concurrency'
+      - '80'
+      # Minimum 1 instance to avoid cold starts
+      - '--min-instances'
+      - '1'
+      - '--max-instances'
+      - '10'
+      - '--allow-unauthenticated'
+      - '--service-account'
+      - 'variant-dashboard-sa@$PROJECT_ID.iam.gserviceaccount.com'
+      - '--set-env-vars'
+      - 'GCS_CACHE_BUCKET=variant-dashboard-cache-$PROJECT_ID,SECRET_KEY=${_SECRET_KEY}'
+      # CPU always allocated
+      - '--cpu-boost'
+      - '--no-cpu-throttling'
+
+images:
+  - 'gcr.io/$PROJECT_ID/variant-dashboard:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/variant-dashboard:latest'
+
+timeout: '1200s'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _SECRET_KEY: 'change-this-in-production-use-secrets-manager'
