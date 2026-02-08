@@ -228,16 +228,6 @@ def create_login_layout(theme="dark"):
     colors = get_theme_colors(theme)
     
     return html.Div([
-        # Theme toggle in corner
-        html.Div([
-            dbc.Button(
-                "☀️ Light" if theme == "dark" else "🌙 Dark",
-                id="theme-toggle-btn",
-                color="secondary",
-                size="sm"
-            )
-        ], style={"position": "absolute", "top": "20px", "right": "20px"}),
-        
         # Logo and header
         get_header_component(theme, "large", True, False, ""),
         
@@ -298,8 +288,7 @@ def create_login_layout(theme="dark"):
     ], style={
         "minHeight": "100vh",
         "backgroundColor": colors["background"],
-        "padding": "20px",
-        "position": "relative"
+        "padding": "20px"
     })
 
 
@@ -343,14 +332,6 @@ def create_landing_layout(user, theme="dark"):
         dbc.Row([
             dbc.Col(width=9),
             dbc.Col([
-                dbc.Button(
-                    "☀️" if theme == "dark" else "🌙",
-                    id="theme-toggle-btn",
-                    color="secondary",
-                    size="sm",
-                    className="me-2",
-                    title="Toggle Light/Dark Mode"
-                ),
                 dbc.Button("🚪 Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
                 dbc.DropdownMenu(
                     label="⋮",
@@ -416,14 +397,6 @@ def create_icarus_historical_layout(user, theme="dark"):
                 )
             ], width=8),
             dbc.Col([
-                dbc.Button(
-                    "☀️" if theme == "dark" else "🌙",
-                    id="theme-toggle-btn",
-                    color="secondary",
-                    size="sm",
-                    className="me-2",
-                    title="Toggle Light/Dark Mode"
-                ),
                 dbc.Button("🚪 Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
                 dbc.DropdownMenu(
                     label="⋮",
@@ -781,19 +754,6 @@ def handle_logout(n_clicks, session_data):
         return {}, 'login'
     return no_update, no_update
 
-
-@callback(
-    Output('theme-store', 'data'),
-    Input('theme-toggle-btn', 'n_clicks'),
-    State('theme-store', 'data'),
-    prevent_initial_call=True
-)
-def toggle_theme(n_clicks, current_theme):
-    """Toggle between dark and light theme"""
-    if n_clicks:
-        new_theme = "light" if current_theme == "dark" else "dark"
-        return new_theme
-    return no_update
 
 
 @callback(
