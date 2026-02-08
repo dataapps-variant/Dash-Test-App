@@ -82,35 +82,42 @@ def get_app_css(theme="dark"):
     .btn-primary {{
         background-color: {colors['accent']} !important;
         border-color: {colors['accent']} !important;
-        color: white !important;
+        color: #000000 !important;
+        font-weight: 600 !important;
     }}
     
     .btn-primary:hover {{
         background-color: {colors['accent_hover']} !important;
         border-color: {colors['accent_hover']} !important;
+        color: #000000 !important;
     }}
     
     .btn-secondary {{
         background-color: {colors['surface']} !important;
-        border-color: {colors['border']} !important;
+        border-color: #333333 !important;
         color: {colors['text_primary']} !important;
     }}
     
     .btn-secondary:hover {{
         background-color: {colors['hover']} !important;
+        border-color: #444444 !important;
     }}
     
     /* Form inputs */
     .form-control, .form-select {{
         background-color: {colors['input_bg']} !important;
         color: {colors['text_primary']} !important;
-        border: 1px solid {colors['border']} !important;
+        border: 1px solid #333333 !important;
         border-radius: 8px !important;
     }}
     
     .form-control:focus, .form-select:focus {{
-        border-color: {colors['accent']} !important;
-        box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2) !important;
+        border-color: #FFFFFF !important;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.15) !important;
+    }}
+    
+    .form-control::placeholder {{
+        color: #666666 !important;
     }}
     
     /* Dropdown menus */
@@ -257,18 +264,6 @@ def get_app_css(theme="dark"):
         border-color: {colors['accent']} !important;
     }}
     
-    /* Date picker */
-    .DateInput_input {{
-        background-color: {colors['input_bg']} !important;
-        color: {colors['text_primary']} !important;
-    }}
-    
-    .SingleDatePickerInput {{
-        background-color: {colors['input_bg']} !important;
-        border: 1px solid {colors['border']} !important;
-        border-radius: 8px !important;
-    }}
-    
     /* Popover */
     .popover {{
         background-color: {colors['card_bg']} !important;
@@ -281,33 +276,93 @@ def get_app_css(theme="dark"):
     
     /* Loading spinner */
     ._dash-loading-callback {{
-        background-color: rgba(15, 23, 42, 0.8) !important;
+        background-color: rgba(0, 0, 0, 0.85) !important;
     }}
     
     /* AG Grid overrides */
-    .ag-theme-alpine-dark {{
+    .ag-theme-alpine-dark, .ag-theme-alpine {{
         --ag-background-color: {colors['card_bg']};
         --ag-header-background-color: {colors['table_header_bg']};
         --ag-odd-row-background-color: {colors['table_row_odd']};
         --ag-row-hover-color: {colors['hover']};
-        --ag-border-color: {colors['border']};
+        --ag-border-color: #1C1C1C;
         --ag-foreground-color: {colors['text_primary']};
         --ag-secondary-foreground-color: {colors['text_secondary']};
-    }}
-    
-    .ag-theme-alpine {{
-        --ag-background-color: {colors['card_bg']};
-        --ag-header-background-color: {colors['table_header_bg']};
-        --ag-odd-row-background-color: {colors['table_row_odd']};
-        --ag-row-hover-color: {colors['hover']};
-        --ag-border-color: {colors['border']};
-        --ag-foreground-color: {colors['text_primary']};
-        --ag-secondary-foreground-color: {colors['text_secondary']};
+        --ag-header-foreground-color: {colors['text_primary']};
+        --ag-data-color: {colors['text_primary']};
+        --ag-cell-horizontal-border: 1px solid #1C1C1C;
+        --ag-row-border-color: #1C1C1C;
     }}
     
     /* Plotly chart background */
     .js-plotly-plot .plotly .bg {{
         fill: {colors['card_bg']} !important;
+    }}
+    
+    /* Ensure ALL text is white on black */
+    .form-check-label {{
+        color: {colors['text_primary']} !important;
+    }}
+    
+    .table td, .table th {{
+        color: {colors['text_primary']} !important;
+        border-color: #1C1C1C !important;
+    }}
+    
+    .dropdown-toggle {{
+        color: {colors['text_primary']} !important;
+    }}
+    
+    /* Remove any colored badge/pill backgrounds */
+    .badge {{
+        background-color: #1C1C1C !important;
+        color: {colors['text_primary']} !important;
+    }}
+    
+    /* Date picker overrides for black theme */
+    .DateInput_input {{
+        background-color: {colors['input_bg']} !important;
+        color: {colors['text_primary']} !important;
+        border-color: #333333 !important;
+    }}
+    
+    .SingleDatePickerInput {{
+        background-color: {colors['input_bg']} !important;
+        border: 1px solid #333333 !important;
+        border-radius: 8px !important;
+    }}
+    
+    .CalendarDay__default {{
+        background: {colors['surface']} !important;
+        color: {colors['text_primary']} !important;
+        border: 1px solid #1C1C1C !important;
+    }}
+    
+    .CalendarDay__selected {{
+        background: #FFFFFF !important;
+        color: #000000 !important;
+    }}
+    
+    .CalendarDay__hovered_span, .CalendarDay__selected_span {{
+        background: #333333 !important;
+        color: #FFFFFF !important;
+    }}
+    
+    .DayPickerNavigation_button {{
+        background: {colors['surface']} !important;
+        border: 1px solid #333333 !important;
+    }}
+    
+    .CalendarMonth_caption {{
+        color: {colors['text_primary']} !important;
+    }}
+    
+    .DayPicker {{
+        background: {colors['card_bg']} !important;
+    }}
+    
+    .DateInput_fang {{
+        display: none !important;
     }}
     """
 
@@ -322,7 +377,7 @@ def get_logo_component(theme="dark", size="large"):
     logo_base64 = get_logo_base64()
     
     if logo_base64:
-        filter_style = "invert(1)" if theme == "dark" else "invert(0)"
+        filter_style = "invert(1) brightness(2)"
         return html.Img(
             src=f"data:image/png;base64,{logo_base64}",
             style={
