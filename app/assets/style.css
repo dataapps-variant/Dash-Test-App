@@ -381,3 +381,14 @@ html, body {
 .modebar-btn:hover path {
     fill: #FFFFFF !important;
 }
+
+/* Clickable dashboard links in landing table */
+table a[id^="nav-btn-"] {
+    transition: all 0.15s ease;
+}
+
+table a[id^="nav-btn-"]:hover {
+    color: #FFFFFF !important;
+    border-bottom-color: #FFFFFF !important;
+    text-shadow: 0 0 8px rgba(255,255,255,0.3);
+}
