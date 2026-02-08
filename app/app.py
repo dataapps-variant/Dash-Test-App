@@ -297,35 +297,59 @@ def create_landing_layout(user, theme="dark"):
     colors = get_theme_colors(theme)
     cache_info = get_cache_info()
     
-    # Build dashboard table data
-    dashboard_data = []
+    # Build clickable dashboard table rows
+    table_header = html.Thead(
+        html.Tr([
+            html.Th("Dashboard", style={"width": "40%"}),
+            html.Th("Status", style={"width": "15%"}),
+            html.Th("Last BQ Refresh", style={"width": "22%"}),
+            html.Th("Last GCS Refresh", style={"width": "23%"})
+        ])
+    )
+    
+    table_rows = []
     for dashboard in DASHBOARDS:
         is_enabled = dashboard.get("enabled", False)
         status = "✅ Active" if is_enabled else "⏸️ Disabled"
         bq_display = cache_info.get("last_bq_refresh", "--") if is_enabled else "--"
         gcs_display = cache_info.get("last_gcs_refresh", "--") if is_enabled else "--"
         
-        dashboard_data.append({
-            "Dashboard": dashboard["name"],
-            "Status": status,
-            "Last BQ Refresh": bq_display,
-            "Last GCS Refresh": gcs_display
-        })
-    
-    df = pd.DataFrame(dashboard_data)
-    
-    # Create buttons for enabled dashboards
-    enabled_dashboards = [d for d in DASHBOARDS if d.get("enabled", False)]
-    dashboard_buttons = []
-    for dashboard in enabled_dashboards:
-        dashboard_buttons.append(
-            dbc.Button(
-                f"📊 {dashboard['name']}",
-                id=f"nav-btn-{dashboard['id']}",
-                color="primary",
-                className="me-2 mb-2"
+        if is_enabled:
+            # Clickable row — dashboard name is a styled button
+            name_cell = html.Td(
+                html.A(
+                    f"📊 {dashboard['name']}",
+                    id=f"nav-btn-{dashboard['id']}",
+                    style={
+                        "color": "#FFFFFF",
+                        "cursor": "pointer",
+                        "textDecoration": "none",
+                        "fontWeight": "600",
+                        "borderBottom": "1px solid rgba(255,255,255,0.3)",
+                        "paddingBottom": "2px"
+                    },
+                    n_clicks=0
+                )
             )
+            row_style = {"cursor": "pointer"}
+        else:
+            # Disabled row — grayed out
+            name_cell = html.Td(
+                f"  {dashboard['name']}",
+                style={"color": "#555555"}
+            )
+            row_style = {"opacity": "0.5"}
+        
+        table_rows.append(
+            html.Tr([
+                name_cell,
+                html.Td(status, style={"color": "#555555"} if not is_enabled else {}),
+                html.Td(bq_display, style={"color": "#555555"} if not is_enabled else {}),
+                html.Td(gcs_display, style={"color": "#555555"} if not is_enabled else {})
+            ], style=row_style)
         )
+    
+    table_body = html.Tbody(table_rows)
     
     return html.Div([
         # Header with menu
@@ -350,28 +374,12 @@ def create_landing_layout(user, theme="dark"):
         # Logo and welcome
         get_header_component(theme, "large", True, True, user["name"] if user else ""),
         
-        # Dashboard info table
+        # Unified clickable dashboard table
         html.H4("📊 Available Dashboards", className="mb-3"),
-        dbc.Table.from_dataframe(df, striped=True, bordered=True, hover=True, className="mb-4"),
-        
-        # Navigation buttons
-        html.P(
-            "Click a button below to open a dashboard:",
-            style={"textAlign": "center", "color": colors["text_secondary"], "fontSize": "14px"}
-        ),
-        html.Div(
-            dashboard_buttons,
-            style={"textAlign": "center", "marginBottom": "20px"}
-        ),
-        
-        # Disabled dashboards info
-        html.Div([
-            html.Small("Disabled dashboards: ", style={"color": colors["text_secondary"]}),
-            html.Small(
-                ", ".join([d["name"] for d in DASHBOARDS if not d.get("enabled", False)]),
-                style={"color": colors["text_secondary"]}
-            )
-        ], style={"textAlign": "center"})
+        dbc.Table(
+            [table_header, table_body],
+            striped=True, bordered=True, hover=True, className="mb-4"
+        )
     ], style={
         "minHeight": "100vh",
         "backgroundColor": colors["background"],
@@ -789,12 +797,13 @@ def navigate_back(back_click):
     prevent_initial_call=True
 )
 def toggle_admin_modal(open_click, close_click, is_open):
-    """Toggle admin modal"""
-    if ctx.triggered_id == "admin-panel-btn":
+    """Toggle admin modal - only opens on explicit button click"""
+    triggered = ctx.triggered_id
+    if triggered == "admin-panel-btn" and open_click:
         return True
-    elif ctx.triggered_id == "close-admin-modal":
+    elif triggered == "close-admin-modal" and close_click:
         return False
-    return is_open
+    return False  # Default to closed instead of preserving state
 
 
 @callback(
