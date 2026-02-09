@@ -865,12 +865,12 @@ def toggle_admin_modal(open_click, close_click, is_open):
     Output('active-tab-content', 'children'),
     Input('dashboard-tabs', 'active_tab'),
     Input('session-store', 'data'),
-    State('theme-store', 'data'),
-    prevent_initial_call=True
+   State('theme-store', 'data'),
+    prevent_initial_call=False
 )
 def load_active_tab(active_tab, session_data, theme):
     """Load content for Active tab"""
-    if active_tab != "active":
+    if not active_tab or active_tab != "active":
         return no_update
     
     theme = theme or "dark"
