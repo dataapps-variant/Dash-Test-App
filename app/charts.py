@@ -94,7 +94,7 @@ def build_line_chart(data, display_name, format_type="dollar", date_range=None, 
     
     # Line opacity for semi-transparency
     LINE_OPACITY = 0.7
-    LINE_WIDTH = 1  # Thin lines
+    LINE_WIDTH = 1.2  # Thin lines
     
     # Add trace for each plan
     for plan in unique_plans:
@@ -107,28 +107,13 @@ def build_line_chart(data, display_name, format_type="dollar", date_range=None, 
             base_color = color_map.get(plan, "#6B7280")
             line_color = hex_to_rgba(base_color, LINE_OPACITY)
             
-            # Custom hover template with full date
+           # Clean tooltip: plan name + value only (date shown once via x unified)
             if format_type == "dollar":
-                hover_template = (
-                    f'<b>{plan}</b><br>'
-                    f'Date: %{{x|%B %d, %Y}}<br>'
-                    f'Value: $%{{y:,.2f}}'
-                    f'<extra></extra>'
-                )
+                hover_template = f'{plan}  $%{{y:,.2f}}<extra></extra>'
             elif format_type == "percent":
-                hover_template = (
-                    f'<b>{plan}</b><br>'
-                    f'Date: %{{x|%B %d, %Y}}<br>'
-                    f'Value: %{{y:.2%}}'
-                    f'<extra></extra>'
-                )
+                hover_template = f'{plan}  %{{y:.2%}}<extra></extra>'
             else:
-                hover_template = (
-                    f'<b>{plan}</b><br>'
-                    f'Date: %{{x|%B %d, %Y}}<br>'
-                    f'Value: %{{y:,.0f}}'
-                    f'<extra></extra>'
-                )
+                hover_template = f'{plan}  %{{y:,.0f}}<extra></extra>'
             
             fig.add_trace(
                 go.Scatter(
@@ -163,11 +148,15 @@ def build_line_chart(data, display_name, format_type="dollar", date_range=None, 
     if date_range:
         xaxis_range = [date_range[0], date_range[1]]
     
-    # Update layout
     fig.update_layout(
-        height=350,
+        height=420,
         margin=dict(l=60, r=20, t=20, b=50),
         hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="#0A0A0A",
+            bordercolor="#1C1C1C",
+            font=dict(family="Inter, sans-serif", size=12, color="#FFFFFF")
+        ),
         paper_bgcolor=colors["card_bg"],
         plot_bgcolor=colors["card_bg"],
         font=dict(
