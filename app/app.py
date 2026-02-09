@@ -726,14 +726,16 @@ def render_page(session_data, current_page, theme):
     Output('session-store', 'data'),
     Output('login-error', 'children'),
     Input('login-button', 'n_clicks'),
+    Input('login-username', 'n_submit'),
+    Input('login-password', 'n_submit'),
     State('login-username', 'value'),
     State('login-password', 'value'),
     State('login-remember', 'value'),
     prevent_initial_call=True
 )
-def handle_login(n_clicks, username, password, remember_me):
-    """Handle login form submission"""
-    if not n_clicks:
+def handle_login(n_clicks, username_submit, password_submit, username, password, remember_me):
+    """Handle login form submission - button click or Enter key"""
+    if not n_clicks and not username_submit and not password_submit:
         return no_update, no_update
     
     if not username or not password:
