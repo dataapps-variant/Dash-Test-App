@@ -417,36 +417,17 @@ def create_icarus_historical_layout(user, theme="dark"):
                     color="secondary"
                 )
             ], width=2, style={"textAlign": "right"})
-        ], className="mb-4", align="center"),
+        ], className="mb-2", align="center"),
         
-        # Refresh section
-        dbc.Row([
-            dbc.Col(width=8),
-            dbc.Col([
-                dbc.Card([
-                    dbc.CardBody([
-                        html.Strong("🔄 Data Refresh"),
-                        dbc.Row([
-                            dbc.Col([
-                                dbc.Button("Refresh BQ", id="refresh-bq-btn", color="primary", size="sm", className="w-100")
-                            ], width=6),
-                            dbc.Col([
-                                html.Small(f"Last: {cache_info.get('last_bq_refresh', '--')}", style={"color": colors["text_secondary"]})
-                            ], width=6)
-                        ], className="mb-2"),
-                        dbc.Row([
-                            dbc.Col([
-                                dbc.Button("Refresh GCS", id="refresh-gcs-btn", color="primary", size="sm", className="w-100")
-                            ], width=6),
-                            dbc.Col([
-                                html.Small(f"Last: {cache_info.get('last_gcs_refresh', '--')}", style={"color": colors["text_secondary"]})
-                            ], width=6)
-                        ]),
-                        html.Div(id="refresh-status")
-                    ])
-                ], style={"background": colors["card_bg"], "border": f"1px solid {colors['border']}"})
-            ], width=4)
-        ], className="mb-4"),
+        # Refresh section - compact inline strip
+        html.Div([
+            html.Span("🔄", style={"marginRight": "8px"}),
+            dbc.Button("Refresh BQ", id="refresh-bq-btn", color="primary", size="sm"),
+            html.Small(f"  Last: {cache_info.get('last_bq_refresh', '--')}  ", style={"color": colors["text_secondary"], "margin": "0 16px 0 8px"}),
+            dbc.Button("Refresh GCS", id="refresh-gcs-btn", color="primary", size="sm"),
+            html.Small(f"  Last: {cache_info.get('last_gcs_refresh', '--')}", style={"color": colors["text_secondary"], "marginLeft": "8px"}),
+            html.Div(id="refresh-status", style={"display": "inline-block", "marginLeft": "16px"})
+        ], style={"textAlign": "right", "padding": "6px 0", "marginBottom": "8px"}),
         
         # Tabs for Active/Inactive
         dbc.Tabs([
@@ -460,7 +441,7 @@ def create_icarus_historical_layout(user, theme="dark"):
                 label="📉 Inactive",
                 tab_id="inactive"
             )
-        ], id="dashboard-tabs", active_tab="active", className="mb-4"),
+        ], id="dashboard-tabs", active_tab="active", className="mb-2"),
         
         # Hidden stores for filter state
         dcc.Store(id="active-filter-state", data={}),
@@ -579,9 +560,9 @@ def create_filters_layout(plan_groups, min_date, max_date, prefix, theme="dark")
                     html.Div(" ", className="filter-title"),
                     dbc.Button("🔄 Reset", id=f"{prefix}-reset-btn", color="secondary", className="w-100")
                 ], width=2)
-            ], className="mb-4"),
+           ], className="mb-2"),
             
-            html.Hr(),
+            html.Hr(style={"margin": "8px 0"}),
             
             # Row 2: Plan Groups
             html.Div("Plan Groups", className="filter-title"),
