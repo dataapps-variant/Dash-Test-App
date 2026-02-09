@@ -169,6 +169,7 @@ def build_line_chart(data, display_name, format_type="dollar", date_range=None, 
             linecolor=colors["border"],
             tickfont=dict(color=colors["text_secondary"]),
             tickformat="%b %Y",  # Month Year format (Jan 2024)
+            hoverformat="%b %d, '%y",  # Full date in tooltip (Dec 13, '25)
             range=xaxis_range,
             fixedrange=False  # Allow zoom on x-axis
         ),
