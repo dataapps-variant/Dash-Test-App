@@ -1039,12 +1039,12 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
                     dbc.Col([
                         html.H6(display_title, style={"color": colors["text_primary"]}),
                         create_legend_component(plans_regular, color_map_regular, theme) if plans_regular else None,
-                        dcc.Graph(figure=fig_regular, config=get_chart_config(), style={"height": "350px"})
+                        dcc.Graph(figure=fig_regular, config=get_chart_config(), style={"height": "420px"})
                     ], width=6),
                     dbc.Col([
                         html.H6(f"{display_title} (Crystal Ball)", style={"color": colors["text_primary"]}),
                         create_legend_component(plans_crystal, color_map_crystal, theme) if plans_crystal else None,
-                        dcc.Graph(figure=fig_crystal, config=get_chart_config(), style={"height": "350px"})
+                        dcc.Graph(figure=fig_crystal, config=get_chart_config(), style={"height": "420px"})
                     ], width=6)
                 ], className="mb-4")
             )
@@ -1165,12 +1165,12 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
                     dbc.Col([
                         html.H6(display_title, style={"color": colors["text_primary"]}),
                         create_legend_component(plans_regular, color_map_regular, theme) if plans_regular else None,
-                        dcc.Graph(figure=fig_regular, config=get_chart_config(), style={"height": "350px"})
+                        dcc.Graph(figure=fig_regular, config=get_chart_config(), style={"height": "420px"})
                     ], width=6),
                     dbc.Col([
                         html.H6(f"{display_title} (Crystal Ball)", style={"color": colors["text_primary"]}),
                         create_legend_component(plans_crystal, color_map_crystal, theme) if plans_crystal else None,
-                        dcc.Graph(figure=fig_crystal, config=get_chart_config(), style={"height": "350px"})
+                        dcc.Graph(figure=fig_crystal, config=get_chart_config(), style={"height": "420px"})
                     ], width=6)
                 ], className="mb-4")
             )
