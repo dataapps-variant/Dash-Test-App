@@ -863,10 +863,6 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
-
-@callback(
-    Output('admin-modal', 'is_open'),
-
 @callback(
     Output('admin-modal', 'is_open'),
     Input('admin-panel-btn', 'n_clicks'),
