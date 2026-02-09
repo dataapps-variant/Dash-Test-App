@@ -480,24 +480,52 @@ def create_filters_layout(plan_groups, min_date, max_date, prefix, theme="dark")
     plans_by_app = get_plans_by_app(plan_groups)
     app_names = sorted(plans_by_app.keys())
     
-    # Plan group checkboxes
+# Plan group checkboxes - show 2 visible, rest collapsed
     plan_checkboxes = []
     for app_name in app_names:
         plans = sorted(plans_by_app.get(app_name, []))
-        options = [{"label": plan, "value": plan} for plan in plans]
-        default_values = [DEFAULT_PLAN] if DEFAULT_PLAN in plans else []
+        visible_plans = plans[:2]
+        hidden_plans = plans[2:]
+        extra_count = len(hidden_plans)
+        
+        visible_options = [{"label": plan, "value": plan} for plan in visible_plans]
+        hidden_options = [{"label": plan, "value": plan} for plan in hidden_plans]
+        
+        default_visible = [DEFAULT_PLAN] if DEFAULT_PLAN in visible_plans else []
+        default_hidden = [DEFAULT_PLAN] if DEFAULT_PLAN in hidden_plans else []
         
         plan_checkboxes.append(
             dbc.Col([
                 html.Div(app_name, className="filter-title"),
-                html.Div([
+                # First 2 plans - always visible
+                dbc.Checklist(
+                    id={"type": f"{prefix}-plan-checklist", "app": app_name},
+                    options=visible_options,
+                    value=default_visible,
+                ),
+                # Remaining plans in collapse
+                dbc.Collapse(
                     dbc.Checklist(
-                        id={"type": f"{prefix}-plan-checklist", "app": app_name},
-                        options=options,
-                        value=default_values,
-                        style={"maxHeight": "180px", "overflowY": "auto"}
-                    )
-                ])
+                        id={"type": f"{prefix}-plan-checklist-more", "app": app_name},
+                        options=hidden_options,
+                        value=default_hidden,
+                    ),
+                    id={"type": f"{prefix}-plan-collapse", "app": app_name},
+                    is_open=False
+                ),
+                # Toggle link (hidden if ≤2 plans)
+                html.A(
+                    f"+{extra_count} more",
+                    id={"type": f"{prefix}-plan-toggle", "app": app_name},
+                    n_clicks=0,
+                    style={
+                        "cursor": "pointer",
+                        "color": "#999999",
+                        "fontSize": "12px",
+                        "display": "block" if extra_count > 0 else "none",
+                        "marginTop": "4px"
+                    }
+                )
             ], width=2)
         )
     
@@ -790,6 +818,54 @@ def navigate_back(back_click):
         return "landing"
     return no_update
 
+# Clientside callbacks for plan group expand/collapse (no server round-trip)
+app.clientside_callback(
+    """
+    function(n_clicks, is_open, text) {
+        if (!n_clicks) return [window.dash_clientside.no_update, window.dash_clientside.no_update];
+        var new_open = !is_open;
+        var new_text;
+        if (new_open) {
+            new_text = text.replace('+', '\u2212').replace('more', 'less');
+        } else {
+            new_text = text.replace('\u2212', '+').replace('less', 'more');
+        }
+        return [new_open, new_text];
+    }
+    """,
+    Output({"type": "active-plan-collapse", "app": MATCH}, "is_open"),
+    Output({"type": "active-plan-toggle", "app": MATCH}, "children"),
+    Input({"type": "active-plan-toggle", "app": MATCH}, "n_clicks"),
+    State({"type": "active-plan-collapse", "app": MATCH}, "is_open"),
+    State({"type": "active-plan-toggle", "app": MATCH}, "children"),
+    prevent_initial_call=True
+)
+
+app.clientside_callback(
+    """
+    function(n_clicks, is_open, text) {
+        if (!n_clicks) return [window.dash_clientside.no_update, window.dash_clientside.no_update];
+        var new_open = !is_open;
+        var new_text;
+        if (new_open) {
+            new_text = text.replace('+', '\u2212').replace('more', 'less');
+        } else {
+            new_text = text.replace('\u2212', '+').replace('less', 'more');
+        }
+        return [new_open, new_text];
+    }
+    """,
+    Output({"type": "inactive-plan-collapse", "app": MATCH}, "is_open"),
+    Output({"type": "inactive-plan-toggle", "app": MATCH}, "children"),
+    Input({"type": "inactive-plan-toggle", "app": MATCH}, "n_clicks"),
+    State({"type": "inactive-plan-collapse", "app": MATCH}, "is_open"),
+    State({"type": "inactive-plan-toggle", "app": MATCH}, "children"),
+    prevent_initial_call=True
+)
+
+
+@callback(
+    Output('admin-modal', 'is_open'),
 
 @callback(
     Output('admin-modal', 'is_open'),
@@ -886,10 +962,11 @@ def load_inactive_tab(active_tab, session_data, theme):
     State('active-cohort', 'value'),
     State('active-metrics', 'value'),
     State({'type': 'active-plan-checklist', 'app': ALL}, 'value'),
+    State({'type': 'active-plan-checklist-more', 'app': ALL}, 'value'),
     State('theme-store', 'data'),
     prevent_initial_call=True
 )
-def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_values, theme):
+def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_values, plan_more_values, theme):
     """Load data for Active tab"""
     if not n_clicks:
         return no_update, no_update
@@ -897,9 +974,12 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
     theme = theme or "dark"
     colors = get_theme_colors(theme)
     
-    # Flatten selected plans
+    # Flatten selected plans (visible + expanded)
     selected_plans = []
     for plans in plan_values:
+        if plans:
+            selected_plans.extend(plans)
+    for plans in plan_more_values:
         if plans:
             selected_plans.extend(plans)
     
@@ -1008,10 +1088,11 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
     State('inactive-cohort', 'value'),
     State('inactive-metrics', 'value'),
     State({'type': 'inactive-plan-checklist', 'app': ALL}, 'value'),
+    State({'type': 'inactive-plan-checklist-more', 'app': ALL}, 'value'),
     State('theme-store', 'data'),
     prevent_initial_call=True
 )
-def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_values, theme):
+def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_values, plan_more_values, theme):
     """Load data for Inactive tab"""
     if not n_clicks:
         return no_update, no_update
@@ -1019,9 +1100,12 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
     theme = theme or "dark"
     colors = get_theme_colors(theme)
     
-    # Flatten selected plans
+    # Flatten selected plans (visible + expanded)
     selected_plans = []
     for plans in plan_values:
+        if plans:
+            selected_plans.extend(plans)
+    for plans in plan_more_values:
         if plans:
             selected_plans.extend(plans)
     
