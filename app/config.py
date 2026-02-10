@@ -176,25 +176,35 @@ THEME_COLORS = {
 # DEFAULT USERS
 # =============================================================================
 DEFAULT_USERS = {
+    "superadmin": {
+        "password": "superadmin123",
+        "role": "super_admin",
+        "name": "Super Administrator",
+        "dashboards": "all",
+        "app_access": {}
+    },
     "admin": {
         "password": "admin123",
         "role": "admin",
         "name": "Administrator",
-        "dashboards": "all"
+        "dashboards": "all",
+        "app_access": {}
     },
     "viewer": {
         "password": "viewer123",
         "role": "readonly",
         "name": "Viewer User",
-        "dashboards": ["icarus_historical"]
+        "dashboards": ["icarus_historical"],
+        "app_access": {}
     }
 }
 
 # =============================================================================
 # ROLE OPTIONS
 # =============================================================================
-ROLE_OPTIONS = ["admin", "readonly"]
+ROLE_OPTIONS = ["super_admin", "admin", "readonly"]
 ROLE_DISPLAY = {
+    "super_admin": "Super Admin",
     "admin": "Admin",
     "readonly": "Read Only"
 }
