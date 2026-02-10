@@ -430,14 +430,20 @@ def create_icarus_historical_layout(user, theme="dark"):
         ], style={"textAlign": "right", "padding": "6px 0", "marginBottom": "8px"}),
         
         # Tabs for Active/Inactive
-        dbc.Tabs([
+       dbc.Tabs([
             dbc.Tab(
-                html.Div(id="active-tab-content"),
+                dcc.Loading(
+                    html.Div(id="active-tab-content"),
+                    type="dot", color="#FFFFFF"
+                ),
                 label="📈 Active",
                 tab_id="active"
             ),
             dbc.Tab(
-                html.Div(id="inactive-tab-content"),
+                dcc.Loading(
+                    html.Div(id="inactive-tab-content"),
+                    type="dot", color="#FFFFFF"
+                ),
                 label="📉 Inactive",
                 tab_id="inactive"
             )
@@ -888,8 +894,8 @@ def load_active_tab(active_tab, session_data, theme):
                 dbc.Button("Load Data", id="active-load-btn", color="primary", className="mt-3 mb-3")
             ], style={"textAlign": "center"}),
             html.Hr(),
-            html.Div(id="active-pivot-container"),
-            html.Div(id="active-charts-container")
+            dcc.Loading(html.Div(id="active-pivot-container"), type="dot", color="#FFFFFF"),
+            dcc.Loading(html.Div(id="active-charts-container"), type="dot", color="#FFFFFF")
         ])
     except Exception as e:
         return dbc.Alert(f"Error loading data: {str(e)}", color="danger")
@@ -922,8 +928,8 @@ def load_inactive_tab(active_tab, session_data, theme):
                 dbc.Button("Load Data", id="inactive-load-btn", color="primary", className="mt-3 mb-3")
             ], style={"textAlign": "center"}),
             html.Hr(),
-            html.Div(id="inactive-pivot-container"),
-            html.Div(id="inactive-charts-container")
+            dcc.Loading(html.Div(id="inactive-pivot-container"), type="dot", color="#FFFFFF"),
+            dcc.Loading(html.Div(id="inactive-charts-container"), type="dot", color="#FFFFFF")
         ])
     except Exception as e:
         return dbc.Alert(f"Error loading data: {str(e)}", color="danger")
@@ -974,13 +980,32 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
     
     # Load pivot data
     try:
-        pivot_regular = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Regular", "Active")
-        pivot_crystal = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Crystal Ball", "Active")
+        # Load regular data
+        try:
+            pivot_regular = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Regular", "Active")
+            df_regular, date_cols_regular = process_pivot_data(pivot_regular, metrics, False)
+        except Exception as e:
+            pivot_regular = None
+            df_regular = None
+            regular_error = str(e)
+        else:
+            regular_error = None
         
-        df_regular, date_cols_regular = process_pivot_data(pivot_regular, metrics, False)
-        df_crystal, date_cols_crystal = process_pivot_data(pivot_crystal, metrics, True)
+        # Load crystal ball data independently
+        try:
+            pivot_crystal = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Crystal Ball", "Active")
+            df_crystal, date_cols_crystal = process_pivot_data(pivot_crystal, metrics, True)
+        except Exception as e:
+            pivot_crystal = None
+            df_crystal = None
+            crystal_error = str(e)
+        else:
+            crystal_error = None
         
         pivot_content = []
+        
+        if regular_error:
+            pivot_content.append(dbc.Alert(f"⚠️ Data loading failed: {regular_error}", color="danger"))
         
         if df_regular is not None and not df_regular.empty:
             pivot_content.append(html.H5("📊 Plan Overview (Regular)"))
@@ -990,10 +1015,14 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
                     columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_regular.columns],
                     defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
                     columnSize="autoSize",
+                    columnSizeOptions={"skipHeader": False},
                     className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
                     style={"height": "400px"}
                 )
             )
+        
+        if crystal_error:
+            pivot_content.append(dbc.Alert(f"⚠️ Data loading failed: {crystal_error}", color="danger"))
         
         if df_crystal is not None and not df_crystal.empty:
             pivot_content.append(html.Br())
@@ -1004,6 +1033,7 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
                     columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_crystal.columns],
                     defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
                     columnSize="autoSize",
+                    columnSizeOptions={"skipHeader": False},
                     className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
                     style={"height": "400px"}
                 )
@@ -1051,10 +1081,14 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
                 ], className="mb-4")
             )
         
+        # Handle case where both are empty
+        if not pivot_content and not charts_content:
+            return dbc.Alert("No data found for the selected filters.", color="warning"), None
+        
         return html.Div(pivot_content), html.Div(charts_content)
         
     except Exception as e:
-        return dbc.Alert(f"Error loading data: {str(e)}", color="danger"), None
+        return dbc.Alert(f"⚠️ Data loading failed: {str(e)}", color="danger"), None
 
 
 @callback(
@@ -1102,13 +1136,32 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
     
     # Load pivot data
     try:
-        pivot_regular = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Regular", "Inactive")
-        pivot_crystal = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Crystal Ball", "Inactive")
+        # Load regular data
+        try:
+            pivot_regular = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Regular", "Inactive")
+            df_regular, date_cols_regular = process_pivot_data(pivot_regular, metrics, False)
+        except Exception as e:
+            pivot_regular = None
+            df_regular = None
+            regular_error = str(e)
+        else:
+            regular_error = None
         
-        df_regular, date_cols_regular = process_pivot_data(pivot_regular, metrics, False)
-        df_crystal, date_cols_crystal = process_pivot_data(pivot_crystal, metrics, True)
+        # Load crystal ball data independently
+        try:
+            pivot_crystal = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Crystal Ball", "Inactive")
+            df_crystal, date_cols_crystal = process_pivot_data(pivot_crystal, metrics, True)
+        except Exception as e:
+            pivot_crystal = None
+            df_crystal = None
+            crystal_error = str(e)
+        else:
+            crystal_error = None
         
         pivot_content = []
+        
+        if regular_error:
+            pivot_content.append(dbc.Alert(f"⚠️ Data loading failed: {regular_error}", color="danger"))
         
         if df_regular is not None and not df_regular.empty:
             pivot_content.append(html.H5("📊 Plan Overview (Regular)"))
@@ -1118,10 +1171,14 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
                     columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_regular.columns],
                     defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
                     columnSize="autoSize",
+                    columnSizeOptions={"skipHeader": False},
                     className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
                     style={"height": "400px"}
                 )
             )
+        
+        if crystal_error:
+            pivot_content.append(dbc.Alert(f"⚠️ Data loading failed: {crystal_error}", color="danger"))
         
         if df_crystal is not None and not df_crystal.empty:
             pivot_content.append(html.Br())
@@ -1132,6 +1189,7 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
                     columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_crystal.columns],
                     defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
                     columnSize="autoSize",
+                    columnSizeOptions={"skipHeader": False},
                     className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
                     style={"height": "400px"}
                 )
@@ -1179,10 +1237,14 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
                 ], className="mb-4")
             )
         
+        # Handle case where both are empty
+        if not pivot_content and not charts_content:
+            return dbc.Alert("No data found for the selected filters.", color="warning"), None
+        
         return html.Div(pivot_content), html.Div(charts_content)
         
     except Exception as e:
-        return dbc.Alert(f"Error loading data: {str(e)}", color="danger"), None
+        return dbc.Alert(f"⚠️ Data loading failed: {str(e)}", color="danger"), None
 
 
 @callback(
@@ -1197,9 +1259,19 @@ def handle_refresh(bq_clicks, gcs_clicks):
         return no_update
     
     if ctx.triggered_id == "refresh-bq-btn":
+        if ctx.triggered_id == "refresh-bq-btn":
         success, msg = refresh_bq_to_staging()
-        color = "success" if success else "danger"
-        return dbc.Alert(msg, color=color, dismissable=True)
+        if success:
+            return dbc.Alert(msg, color="success", dismissable=True)
+        else:
+            return dbc.Alert(f"⚠️ Refresh failed: {msg}", color="danger", dismissable=True)
+    
+    elif ctx.triggered_id == "refresh-gcs-btn":
+        success, msg = refresh_gcs_from_staging()
+        if success:
+            return dbc.Alert(msg, color="success", dismissable=True)
+        else:
+            return dbc.Alert(f"⚠️ Refresh failed: {msg}", color="danger", dismissable=True)
     
     elif ctx.triggered_id == "refresh-gcs-btn":
         success, msg = refresh_gcs_from_staging()
