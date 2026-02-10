@@ -30,7 +30,9 @@ from app.theme import get_app_css, get_theme_colors, get_header_component, get_l
 from app.auth import (
     authenticate, logout, is_authenticated, get_current_user, is_admin,
     get_all_users, add_user, update_user, delete_user, get_role_display,
-    get_readonly_users_for_dashboard, get_session_data
+    get_readonly_users_for_dashboard, get_session_data,
+    is_super_admin, can_manage_user, can_delete_user, get_assignable_roles,
+    get_user_allowed_apps, get_user_app_access_from_db
 )
 from app.bigquery_client import (
     load_date_bounds, load_plan_groups, load_pivot_data, load_all_chart_data,
@@ -124,6 +126,47 @@ def get_plans_by_app(plan_groups):
         if plan not in result[app]:
             result[app].append(plan)
     return result
+
+
+def filter_plan_groups_by_apps(plan_groups, allowed_apps):
+    """
+    Filter plan_groups dict to only include plans from allowed apps.
+    If allowed_apps is None, return all (no filtering).
+    """
+    if allowed_apps is None:
+        return plan_groups
+    
+    filtered_indices = [
+        i for i in range(len(plan_groups["App_Name"]))
+        if plan_groups["App_Name"][i] in allowed_apps
+    ]
+    
+    return {
+        "App_Name": [plan_groups["App_Name"][i] for i in filtered_indices],
+        "Plan_Name": [plan_groups["Plan_Name"][i] for i in filtered_indices]
+    }
+
+
+def get_available_apps_for_dashboard(dashboard_id):
+    """Get all available App_Names for a dashboard by loading plan groups"""
+    try:
+        active_plans = load_plan_groups("Active")
+        inactive_plans = load_plan_groups("Inactive")
+        
+        all_apps = set(active_plans.get("App_Name", []))
+        all_apps.update(inactive_plans.get("App_Name", []))
+        
+        return sorted(all_apps)
+    except Exception:
+        return []
+
+
+def get_dashboard_name(dashboard_id):
+    """Get dashboard display name from ID"""
+    for d in DASHBOARDS:
+        if d["id"] == dashboard_id:
+            return d["name"]
+    return dashboard_id
 
 
 def format_metric_value(value, metric_name, is_crystal_ball=False):
@@ -306,6 +349,10 @@ def create_landing_layout(user, theme="dark"):
     colors = get_theme_colors(theme)
     cache_info = get_cache_info()
     
+    # Check if user can access admin panel (admin or super_admin)
+    user_role = user.get("role", "readonly") if user else "readonly"
+    show_admin = user_role in ("admin", "super_admin")
+    
     # Build clickable dashboard table rows
     table_header = html.Thead(
         html.Tr([
@@ -360,6 +407,14 @@ def create_landing_layout(user, theme="dark"):
     
     table_body = html.Tbody(table_rows)
     
+    # Role display text
+    if user_role == "super_admin":
+        role_text = "Super Admin"
+    elif user_role == "admin":
+        role_text = "Admin"
+    else:
+        role_text = "Read Only"
+    
     return html.Div([
         # Header with menu
         dbc.Row([
@@ -369,10 +424,10 @@ def create_landing_layout(user, theme="dark"):
                 dbc.DropdownMenu(
                     label="⋮",
                     children=[
-                        dbc.DropdownMenuItem("🔧 Admin Panel", id="admin-panel-btn") if user and user.get("role") == "admin" else None,
-                        dbc.DropdownMenuItem(divider=True) if user and user.get("role") == "admin" else None,
+                        dbc.DropdownMenuItem("🔧 Admin Panel", id="admin-panel-btn") if show_admin else None,
+                        dbc.DropdownMenuItem(divider=True) if show_admin else None,
                         dbc.DropdownMenuItem(f"User: {user['name']}", disabled=True) if user else None,
-                        dbc.DropdownMenuItem(f"Role: {'Admin' if user and user.get('role') == 'admin' else 'Read Only'}", disabled=True) if user else None,
+                        dbc.DropdownMenuItem(f"Role: {role_text}", disabled=True) if user else None,
                     ],
                     
                     color="secondary"
@@ -603,77 +658,152 @@ def create_filters_layout(plan_groups, min_date, max_date, prefix, theme="dark")
 
 
 def create_admin_layout(theme="dark"):
-    """Create admin panel layout"""
+    """Create admin panel with users table and edit user modal"""
     colors = get_theme_colors(theme)
-    users = get_all_users()
     
-    # Users table data
-    user_data = []
-    for user_id, user_info in users.items():
-        user_data.append({
-            "User ID": user_id,
-            "Name": user_info["name"],
-            "Role": get_role_display(user_info["role"]),
-            "Password": "••••••••"
-        })
+    # Dashboard options for dropdowns
+    dashboard_options = [{"label": d["name"], "value": d["id"]} for d in DASHBOARDS]
     
-    users_df = pd.DataFrame(user_data)
-    
-    # Dashboard access table
-    access_data = []
-    for dashboard in DASHBOARDS:
-        readonly_users = get_readonly_users_for_dashboard(dashboard["id"])
-        users_display = ", ".join(readonly_users) if readonly_users else "—"
-        access_data.append({
-            "Dashboard": dashboard["name"],
-            "Read Only Users": users_display
-        })
-    
-    access_df = pd.DataFrame(access_data)
-    
-    return dbc.Modal([
-        dbc.ModalHeader([
-            dbc.ModalTitle("Admin Panel"),
-            dbc.Button("✕", id="close-admin-modal", color="light", size="sm", className="ms-auto")
-        ]),
-        dbc.ModalBody([
-            # Users section
-            html.H5("👥 Users"),
-            dbc.Table.from_dataframe(users_df, striped=True, bordered=True, hover=True, className="mb-4"),
-            
-            html.Hr(),
-            
-            # Dashboard access section
-            html.H5("📊 Dashboard Access"),
-            html.Small("Note: Admin users have access to all dashboards.", className="text-muted"),
-            dbc.Table.from_dataframe(access_df, striped=True, bordered=True, hover=True, className="mb-4"),
-            
-            html.Hr(),
-            
-            # Add new user section
-            dbc.Accordion([
-                dbc.AccordionItem([
+    return html.Div([
+        # =====================================================================
+        # ADMIN MODAL - Main Panel
+        # =====================================================================
+        dbc.Modal([
+            dbc.ModalHeader([
+                dbc.ModalTitle("Admin Panel"),
+                dbc.Button("✕", id="close-admin-modal", color="light", size="sm", className="ms-auto")
+            ]),
+            dbc.ModalBody([
+                # Users section header
+                dbc.Row([
+                    dbc.Col([
+                        html.H5("👥 Users", className="mb-0")
+                    ], width=8),
+                    dbc.Col([
+                        dbc.Button("+ Add New User", id="admin-add-user-btn", color="primary", size="sm")
+                    ], width=4, style={"textAlign": "right"})
+                ], className="mb-3", align="center"),
+                
+                html.Small(
+                    "Super Admin has full access and cannot be edited. Admin users have access to all dashboards and apps.",
+                    style={"color": "#666666"}
+                ),
+                html.Hr(),
+                
+                # Dynamic users table (populated by callback)
+                html.Div(id="admin-users-table"),
+                
+                # Status message
+                html.Div(id="admin-status")
+            ])
+        ], id="admin-modal", size="xl", is_open=False, scrollable=True),
+        
+        # =====================================================================
+        # EDIT USER MODAL
+        # =====================================================================
+        dbc.Modal([
+            dbc.ModalHeader([
+                dbc.ModalTitle(id="edit-modal-title"),
+                dbc.Button("✕", id="edit-cancel-btn", color="light", size="sm", className="ms-auto")
+            ]),
+            dbc.ModalBody([
+                # Row 1: User ID + Password
+                dbc.Row([
+                    dbc.Col([
+                        html.Div("User ID", className="filter-title"),
+                        dbc.Input(id="edit-user-id", placeholder="Login ID", className="mb-2")
+                    ], width=6),
+                    dbc.Col([
+                        html.Div("Password", className="filter-title"),
+                        dbc.Input(id="edit-user-password", placeholder="Password", type="text", className="mb-2")
+                    ], width=6)
+                ]),
+                
+                # Row 2: Name + Role
+                dbc.Row([
+                    dbc.Col([
+                        html.Div("Name", className="filter-title"),
+                        dbc.Input(id="edit-user-name", placeholder="Display Name", className="mb-2")
+                    ], width=6),
+                    dbc.Col([
+                        html.Div("Role", className="filter-title"),
+                        dbc.Select(id="edit-user-role", className="mb-2")
+                    ], width=6)
+                ]),
+                
+                html.Hr(),
+                
+                # Dashboard & App Access section (only for readonly)
+                html.Div(id="edit-access-section", children=[
+                    html.H6("Dashboard & App Access", className="mb-3"),
+                    
+                    # Current access display
+                    html.Div(id="edit-access-display", className="mb-3"),
+                    
+                    html.Hr(),
+                    
+                    # Add access row
+                    html.Div("Add Access", className="filter-title"),
                     dbc.Row([
                         dbc.Col([
-                            dbc.Input(id="new-user-name", placeholder="Display Name", className="mb-2"),
-                            dbc.Input(id="new-user-id", placeholder="Login ID", className="mb-2")
-                        ], width=6),
-                        dbc.Col([
-                            dbc.Input(id="new-user-password", placeholder="Password", type="password", className="mb-2"),
                             dbc.Select(
-                                id="new-user-role",
-                                options=[{"label": ROLE_DISPLAY[r], "value": r} for r in ROLE_OPTIONS],
-                                value="readonly",
-                                className="mb-2"
+                                id="edit-add-dashboard",
+                                options=dashboard_options,
+                                placeholder="Select Dashboard..."
                             )
-                        ], width=6)
-                    ]),
-                    dbc.Button("Create User", id="create-user-btn", color="primary"),
-                    html.Div(id="create-user-status")
-                ], title="➕ Add New User")
+                        ], width=5),
+                        dbc.Col([
+                            dbc.Checklist(
+                                id="edit-add-apps",
+                                options=[],
+                                value=[],
+                                inline=True,
+                                style={"fontSize": "13px"}
+                            )
+                        ], width=5),
+                        dbc.Col([
+                            dbc.Button("Add", id="edit-add-access-btn", color="primary", size="sm", className="w-100")
+                        ], width=2)
+                    ], className="mb-3", align="center"),
+                ]),
+                
+                html.Hr(),
+                
+                # Status message
+                html.Div(id="edit-status"),
+                
+                # Action buttons
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Button("Save", id="edit-save-btn", color="primary", className="me-2"),
+                        dbc.Button("Cancel", id="edit-close-btn", color="secondary")
+                    ], width=8),
+                    dbc.Col([
+                        dbc.Button("Delete User", id="edit-delete-btn", color="danger", outline=True, size="sm")
+                    ], width=4, style={"textAlign": "right"})
+                ])
             ])
-        ])
-    ], id="admin-modal", size="xl", is_open=False)
+        ], id="edit-user-modal", size="lg", is_open=False, backdrop="static"),
+        
+        # =====================================================================
+        # DELETE CONFIRMATION MODAL
+        # =====================================================================
+        dbc.Modal([
+            dbc.ModalHeader(dbc.ModalTitle("Confirm Delete")),
+            dbc.ModalBody("Are you sure you want to delete this user? This cannot be undone."),
+            dbc.ModalFooter([
+                dbc.Button("Cancel", id="delete-cancel-btn", color="secondary", className="me-2"),
+                dbc.Button("Delete", id="delete-confirm-btn", color="danger")
+            ])
+        ], id="delete-confirm-modal", is_open=False, centered=True),
+        
+        # =====================================================================
+        # STORES
+        # =====================================================================
+        dcc.Store(id="admin-refresh-store", data=0),
+        dcc.Store(id="edit-user-access-store", data={}),
+        dcc.Store(id="edit-user-mode-store", data={"mode": "new", "user_id": ""})
+    ])
 
 
 # =============================================================================
@@ -714,8 +844,6 @@ app.layout = html.Div([
 )
 def update_css(theme):
     """Update body class based on theme"""
-    # We can't inject CSS directly, but layouts will re-render with new theme
-    # The inline styles in layouts will handle theming
     return html.Div(id='theme-indicator', **{'data-theme': theme or 'dark'})
 
 
@@ -870,6 +998,11 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+
+# =============================================================================
+# ADMIN PANEL CALLBACKS
+# =============================================================================
+
 @callback(
     Output('admin-modal', 'is_open'),
     Input('admin-panel-btn', 'n_clicks'),
@@ -878,14 +1011,439 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 def toggle_admin_modal(open_click, close_click, is_open):
-    """Toggle admin modal - only opens on explicit button click"""
+    """Toggle admin modal"""
     triggered = ctx.triggered_id
     if triggered == "admin-panel-btn" and open_click:
         return True
     elif triggered == "close-admin-modal" and close_click:
         return False
-    return False  # Default to closed instead of preserving state
+    return False
 
+
+@callback(
+    Output('admin-users-table', 'children'),
+    Input('admin-modal', 'is_open'),
+    Input('admin-refresh-store', 'data'),
+    State('session-store', 'data'),
+    prevent_initial_call=True
+)
+def populate_admin_users_table(is_open, refresh_trigger, session_data):
+    """Populate the users table in admin panel"""
+    if not is_open:
+        return no_update
+    
+    session_id = session_data.get('session_id') if session_data else None
+    current_user = get_current_user(session_id) if session_id else None
+    current_role = current_user.get("role", "readonly") if current_user else "readonly"
+    
+    users = get_all_users()
+    
+    # Build table header
+    table_header = html.Thead(
+        html.Tr([
+            html.Th("User ID", style={"width": "10%"}),
+            html.Th("Name", style={"width": "13%"}),
+            html.Th("Role", style={"width": "10%"}),
+            html.Th("Password", style={"width": "12%"}),
+            html.Th("Dashboards", style={"width": "25%"}),
+            html.Th("Apps", style={"width": "20%"}),
+            html.Th("Action", style={"width": "10%"})
+        ])
+    )
+    
+    # Build table rows
+    table_rows = []
+    for user_id, user_info in users.items():
+        role = user_info.get("role", "readonly")
+        role_display = get_role_display(role)
+        password = user_info.get("password", "")
+        
+        # Dashboards column
+        dashboards = user_info.get("dashboards", [])
+        if dashboards == "all" or role in ("admin", "super_admin"):
+            dash_text = "All"
+        elif isinstance(dashboards, list):
+            dash_names = [get_dashboard_name(d) for d in dashboards]
+            dash_text = ", ".join(dash_names) if dash_names else "None"
+        else:
+            dash_text = "None"
+        
+        # Apps column
+        app_access = user_info.get("app_access", {})
+        if role in ("admin", "super_admin"):
+            apps_text = "All"
+        elif app_access:
+            # Collect unique apps across all dashboards
+            all_apps = set()
+            for dash_id, apps in app_access.items():
+                all_apps.update(apps)
+            if all_apps:
+                apps_text = ", ".join(sorted(all_apps))
+            else:
+                apps_text = "All (no restrictions)"
+        else:
+            apps_text = "All (no restrictions)"
+        
+        # Action column - Edit button
+        can_edit = can_manage_user(current_role, role)
+        # Super admin can also edit themselves (password/name only)
+        if role == "super_admin" and current_role == "super_admin":
+            can_edit = True
+        
+        if can_edit:
+            action_cell = html.Td(
+                dbc.Button(
+                    "Edit",
+                    id={"type": "admin-edit-btn", "index": user_id},
+                    color="secondary",
+                    size="sm",
+                    outline=True
+                )
+            )
+        else:
+            action_cell = html.Td("—", style={"color": "#555555"})
+        
+        table_rows.append(
+            html.Tr([
+                html.Td(user_id),
+                html.Td(user_info.get("name", "")),
+                html.Td(role_display),
+                html.Td(password),
+                html.Td(dash_text, style={"fontSize": "13px"}),
+                html.Td(apps_text, style={"fontSize": "13px"}),
+                action_cell
+            ])
+        )
+    
+    table_body = html.Tbody(table_rows)
+    
+    return dbc.Table(
+        [table_header, table_body],
+        striped=True, bordered=True, hover=True, size="sm"
+    )
+
+
+@callback(
+    Output('edit-user-modal', 'is_open'),
+    Output('edit-modal-title', 'children'),
+    Output('edit-user-id', 'value'),
+    Output('edit-user-id', 'disabled'),
+    Output('edit-user-name', 'value'),
+    Output('edit-user-password', 'value'),
+    Output('edit-user-role', 'options'),
+    Output('edit-user-role', 'value'),
+    Output('edit-user-role', 'disabled'),
+    Output('edit-user-access-store', 'data'),
+    Output('edit-user-mode-store', 'data'),
+    Output('edit-access-section', 'style'),
+    Output('edit-delete-btn', 'style'),
+    Output('edit-status', 'children'),
+    Input({"type": "admin-edit-btn", "index": ALL}, "n_clicks"),
+    Input("admin-add-user-btn", "n_clicks"),
+    Input("edit-cancel-btn", "n_clicks"),
+    Input("edit-close-btn", "n_clicks"),
+    State('session-store', 'data'),
+    prevent_initial_call=True
+)
+def open_edit_user_modal(edit_clicks, add_click, cancel_click, close_click, session_data):
+    """Open/close the edit user modal and populate fields"""
+    triggered = ctx.triggered_id
+    
+    # Close modal
+    if triggered in ("edit-cancel-btn", "edit-close-btn"):
+        return (False, "", "", False, "", "", [], "", False, {}, {"mode": "new", "user_id": ""}, 
+                {"display": "none"}, {"display": "none"}, "")
+    
+    # Get current user role
+    session_id = session_data.get('session_id') if session_data else None
+    current_user = get_current_user(session_id) if session_id else None
+    current_role = current_user.get("role", "readonly") if current_user else "readonly"
+    
+    # Get assignable roles
+    assignable = get_assignable_roles(current_role)
+    role_options = [{"label": ROLE_DISPLAY.get(r, r), "value": r} for r in assignable]
+    
+    # ADD NEW USER
+    if triggered == "admin-add-user-btn" and add_click:
+        return (
+            True,                               # is_open
+            "Add New User",                     # title
+            "",                                 # user_id
+            False,                              # user_id disabled
+            "",                                 # name
+            "",                                 # password
+            role_options,                       # role options
+            "readonly",                         # role value
+            False,                              # role disabled
+            {},                                 # access store
+            {"mode": "new", "user_id": ""},     # mode store
+            {"display": "block"},               # access section visible
+            {"display": "none"},                # delete button hidden
+            ""                                  # status clear
+        )
+    
+    # EDIT EXISTING USER
+    if isinstance(triggered, dict) and triggered.get("type") == "admin-edit-btn":
+        user_id = triggered.get("index", "")
+        
+        # Check if the click actually happened
+        all_clicks = [c for c in edit_clicks if c]
+        if not all_clicks:
+            return (no_update,) * 14
+        
+        users = get_all_users()
+        if user_id not in users:
+            return (no_update,) * 14
+        
+        user_info = users[user_id]
+        target_role = user_info.get("role", "readonly")
+        
+        # Load current access
+        current_access = user_info.get("app_access", {})
+        
+        # Role dropdown logic
+        if target_role == "super_admin":
+            # Super admin editing themselves - role locked
+            edit_role_options = [{"label": "Super Admin", "value": "super_admin"}]
+            role_disabled = True
+        else:
+            edit_role_options = role_options
+            role_disabled = False
+        
+        # Access section visibility
+        show_access = {"display": "block"} if target_role == "readonly" else {"display": "none"}
+        
+        # Delete button visibility
+        can_del = can_delete_user(current_role, user_id, target_role)
+        delete_style = {"display": "inline-block"} if can_del else {"display": "none"}
+        
+        # Dashboards for access store
+        dashboards = user_info.get("dashboards", [])
+        access_data = {}
+        if isinstance(dashboards, list):
+            for dash_id in dashboards:
+                access_data[dash_id] = current_access.get(dash_id, [])
+        
+        return (
+            True,                                   # is_open
+            f"Edit User: {user_id}",                # title
+            user_id,                                # user_id
+            True,                                   # user_id disabled (can't change ID)
+            user_info.get("name", ""),              # name
+            user_info.get("password", ""),           # password
+            edit_role_options,                       # role options
+            target_role,                            # role value
+            role_disabled,                          # role disabled
+            access_data,                            # access store
+            {"mode": "edit", "user_id": user_id},   # mode store
+            show_access,                            # access section
+            delete_style,                           # delete button
+            ""                                      # status clear
+        )
+    
+    return (no_update,) * 14
+
+
+@callback(
+    Output('edit-access-display', 'children'),
+    Input('edit-user-access-store', 'data'),
+    prevent_initial_call=True
+)
+def render_access_display(access_data):
+    """Render the current dashboard/app access assignments"""
+    if not access_data:
+        return html.Small("No dashboard access assigned.", style={"color": "#666666"})
+    
+    rows = []
+    for dash_id, apps in access_data.items():
+        dash_name = get_dashboard_name(dash_id)
+        apps_text = ", ".join(sorted(apps)) if apps else "All apps"
+        
+        rows.append(
+            dbc.Row([
+                dbc.Col([
+                    html.Span(f"{dash_name}", style={"fontWeight": "500"}),
+                    html.Span(f"  →  {apps_text}", style={"color": "#999999", "fontSize": "13px"})
+                ], width=10),
+                dbc.Col([
+                    dbc.Button(
+                        "Remove",
+                        id={"type": "remove-access-btn", "index": dash_id},
+                        color="danger",
+                        size="sm",
+                        outline=True
+                    )
+                ], width=2, style={"textAlign": "right"})
+            ], className="mb-2", align="center",
+               style={"padding": "6px 10px", "background": "#0A0A0A", "borderRadius": "6px", "border": "1px solid #1C1C1C"})
+        )
+    
+    return html.Div(rows)
+
+
+@callback(
+    Output('edit-add-apps', 'options'),
+    Output('edit-add-apps', 'value'),
+    Input('edit-add-dashboard', 'value'),
+    prevent_initial_call=True
+)
+def load_apps_for_selected_dashboard(dashboard_id):
+    """Load available apps when a dashboard is selected in the add access section"""
+    if not dashboard_id:
+        return [], []
+    
+    apps = get_available_apps_for_dashboard(dashboard_id)
+    options = [{"label": app, "value": app} for app in apps]
+    return options, []
+
+
+@callback(
+    Output('edit-user-access-store', 'data', allow_duplicate=True),
+    Input('edit-add-access-btn', 'n_clicks'),
+    State('edit-add-dashboard', 'value'),
+    State('edit-add-apps', 'value'),
+    State('edit-user-access-store', 'data'),
+    prevent_initial_call=True
+)
+def add_access_row(n_clicks, dashboard_id, selected_apps, current_access):
+    """Add a dashboard+apps access row to the store"""
+    if not n_clicks or not dashboard_id:
+        return no_update
+    
+    updated = dict(current_access) if current_access else {}
+    updated[dashboard_id] = selected_apps or []
+    return updated
+
+
+@callback(
+    Output('edit-user-access-store', 'data', allow_duplicate=True),
+    Input({"type": "remove-access-btn", "index": ALL}, "n_clicks"),
+    State('edit-user-access-store', 'data'),
+    prevent_initial_call=True
+)
+def remove_access_row(remove_clicks, current_access):
+    """Remove a dashboard access row from the store"""
+    if not any(c for c in remove_clicks if c):
+        return no_update
+    
+    triggered = ctx.triggered_id
+    if not isinstance(triggered, dict):
+        return no_update
+    
+    dash_id = triggered.get("index", "")
+    updated = dict(current_access) if current_access else {}
+    
+    if dash_id in updated:
+        del updated[dash_id]
+    
+    return updated
+
+
+@callback(
+    Output('edit-access-section', 'style', allow_duplicate=True),
+    Input('edit-user-role', 'value'),
+    prevent_initial_call=True
+)
+def toggle_access_section_visibility(role):
+    """Show/hide access section based on selected role"""
+    if role == "readonly":
+        return {"display": "block"}
+    return {"display": "none"}
+
+
+@callback(
+    Output('edit-status', 'children', allow_duplicate=True),
+    Output('admin-refresh-store', 'data', allow_duplicate=True),
+    Output('edit-user-modal', 'is_open', allow_duplicate=True),
+    Input('edit-save-btn', 'n_clicks'),
+    State('edit-user-id', 'value'),
+    State('edit-user-name', 'value'),
+    State('edit-user-password', 'value'),
+    State('edit-user-role', 'value'),
+    State('edit-user-access-store', 'data'),
+    State('edit-user-mode-store', 'data'),
+    State('admin-refresh-store', 'data'),
+    prevent_initial_call=True
+)
+def save_user_from_modal(n_clicks, user_id, name, password, role, access_data, mode_data, refresh_count):
+    """Save user (create or update) from the edit modal"""
+    if not n_clicks:
+        return no_update, no_update, no_update
+    
+    if not user_id or not name or not password:
+        return dbc.Alert("Please fill all required fields (User ID, Name, Password).", color="warning"), no_update, no_update
+    
+    mode = mode_data.get("mode", "new") if mode_data else "new"
+    
+    # Build dashboards list and app_access from access_data
+    if role in ("admin", "super_admin"):
+        dashboards = "all"
+        app_access = {}
+    else:
+        dashboards = list(access_data.keys()) if access_data else []
+        app_access = access_data if access_data else {}
+    
+    if mode == "new":
+        success, msg = add_user(user_id, password, role, name, dashboards, app_access)
+    else:
+        success, msg = update_user(user_id, password=password, role=role, name=name,
+                                   dashboards=dashboards, app_access=app_access)
+    
+    if success:
+        new_refresh = (refresh_count or 0) + 1
+        return "", new_refresh, False  # Close modal on success
+    else:
+        return dbc.Alert(msg, color="danger"), no_update, no_update
+
+
+@callback(
+    Output('delete-confirm-modal', 'is_open'),
+    Input('edit-delete-btn', 'n_clicks'),
+    Input('delete-cancel-btn', 'n_clicks'),
+    Input('delete-confirm-btn', 'n_clicks'),
+    State('delete-confirm-modal', 'is_open'),
+    prevent_initial_call=True
+)
+def toggle_delete_confirmation(delete_click, cancel_click, confirm_click, is_open):
+    """Toggle delete confirmation modal"""
+    triggered = ctx.triggered_id
+    if triggered == "edit-delete-btn" and delete_click:
+        return True
+    if triggered in ("delete-cancel-btn", "delete-confirm-btn"):
+        return False
+    return False
+
+
+@callback(
+    Output('edit-status', 'children', allow_duplicate=True),
+    Output('admin-refresh-store', 'data', allow_duplicate=True),
+    Output('edit-user-modal', 'is_open', allow_duplicate=True),
+    Input('delete-confirm-btn', 'n_clicks'),
+    State('edit-user-mode-store', 'data'),
+    State('admin-refresh-store', 'data'),
+    prevent_initial_call=True
+)
+def execute_delete_user(n_clicks, mode_data, refresh_count):
+    """Actually delete the user after confirmation"""
+    if not n_clicks:
+        return no_update, no_update, no_update
+    
+    user_id = mode_data.get("user_id", "") if mode_data else ""
+    if not user_id:
+        return dbc.Alert("No user selected for deletion.", color="danger"), no_update, no_update
+    
+    success, msg = delete_user(user_id)
+    
+    if success:
+        new_refresh = (refresh_count or 0) + 1
+        return "", new_refresh, False  # Close edit modal
+    else:
+        return dbc.Alert(msg, color="danger"), no_update, no_update
+
+
+# =============================================================================
+# DASHBOARD DATA CALLBACKS
+# =============================================================================
 
 @callback(
     Output('active-tab-content', 'children'),
@@ -902,8 +1460,16 @@ def load_active_tab(active_tab, session_data, theme):
     theme = theme or "dark"
     
     try:
+        # Get current user for app filtering
+        session_id = session_data.get('session_id') if session_data else None
+        user = get_current_user(session_id) if session_id else None
+        allowed_apps = get_user_allowed_apps(user, "icarus_historical") if user else None
+        
         date_bounds = load_date_bounds()
         plan_groups = load_plan_groups("Active")
+        
+        # Filter plan groups by allowed apps
+        plan_groups = filter_plan_groups_by_apps(plan_groups, allowed_apps)
         
         if not plan_groups["Plan_Name"]:
             return dbc.Alert("No active plans found.", color="warning")
@@ -936,8 +1502,16 @@ def load_inactive_tab(active_tab, session_data, theme):
     theme = theme or "dark"
     
     try:
+        # Get current user for app filtering
+        session_id = session_data.get('session_id') if session_data else None
+        user = get_current_user(session_id) if session_id else None
+        allowed_apps = get_user_allowed_apps(user, "icarus_historical") if user else None
+        
         date_bounds = load_date_bounds()
         plan_groups = load_plan_groups("Inactive")
+        
+        # Filter plan groups by allowed apps
+        plan_groups = filter_plan_groups_by_apps(plan_groups, allowed_apps)
         
         if not plan_groups["Plan_Name"]:
             return dbc.Alert("No inactive plans found.", color="warning")
@@ -1293,30 +1867,6 @@ def handle_refresh(bq_clicks, gcs_clicks):
             return dbc.Alert(f"⚠️ Refresh failed: {msg}", color="danger", dismissable=True)
     
     return no_update
-
-
-@callback(
-    Output('create-user-status', 'children'),
-    Input('create-user-btn', 'n_clicks'),
-    State('new-user-name', 'value'),
-    State('new-user-id', 'value'),
-    State('new-user-password', 'value'),
-    State('new-user-role', 'value'),
-    prevent_initial_call=True
-)
-def create_new_user(n_clicks, name, user_id, password, role):
-    """Create a new user"""
-    if not n_clicks:
-        return no_update
-    
-    if not all([name, user_id, password]):
-        return dbc.Alert("Please fill all required fields", color="warning")
-    
-    dashboards = [] if role == "readonly" else "all"
-    success, msg = add_user(user_id, password, role, name, dashboards)
-    
-    color = "success" if success else "danger"
-    return dbc.Alert(msg, color=color, dismissable=True)
 
 
 # =============================================================================
