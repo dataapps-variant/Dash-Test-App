@@ -254,12 +254,21 @@ def create_login_layout(theme="dark"):
                             type="text",
                             className="mb-3"
                         ),
-                        dbc.Input(
-                            id="login-password",
-                            placeholder="Enter your password",
-                            type="password",
-                            className="mb-3"
-                        ),
+                        dbc.InputGroup([
+                            dbc.Input(
+                                id="login-password",
+                                placeholder="Enter your password",
+                                type="password",
+                            ),
+                            dbc.Button(
+                                "👁",
+                                id="toggle-password-btn",
+                                color="secondary",
+                                outline=True,
+                                n_clicks=0,
+                                style={"borderColor": "#333333"}
+                            )
+                        ], className="mb-3"),
                         dbc.Checkbox(
                             id="login-remember",
                             label="Remember me",
@@ -763,6 +772,16 @@ def handle_login(n_clicks, username_submit, password_submit, username, password,
     else:
         return no_update, dbc.Alert("Invalid username or password", color="danger")
 
+@callback(
+    Output('login-password', 'type'),
+    Input('toggle-password-btn', 'n_clicks'),
+    prevent_initial_call=True
+)
+def toggle_password_visibility(n_clicks):
+    """Toggle password field between hidden and visible"""
+    if n_clicks and n_clicks % 2 == 1:
+        return "text"
+    return "password"
 
 @callback(
     Output('session-store', 'data', allow_duplicate=True),
