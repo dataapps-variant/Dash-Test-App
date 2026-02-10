@@ -432,3 +432,213 @@ hr {
     padding: 8px 12px !important;
     font-size: 14px !important;
 }
+/* ===========================================
+   RESPONSIVE DESIGN - Tablet & Mobile
+   =========================================== */
+
+/* TABLET (768px - 1200px) */
+@media (max-width: 1200px) {
+    /* Tighter page padding */
+    body .dash-graph {
+        padding: 0 !important;
+    }
+
+    /* Smaller fonts */
+    h4 { font-size: 18px !important; }
+    h5 { font-size: 16px !important; }
+    h6 { font-size: 14px !important; }
+
+    /* Compact filter titles */
+    .filter-title {
+        font-size: 11px !important;
+    }
+
+    /* Smaller tab text */
+    .nav-tabs .nav-link {
+        padding: 5px 12px !important;
+        font-size: 13px !important;
+    }
+
+    /* AG Grid - smaller text */
+    .ag-theme-alpine-dark .ag-cell,
+    .ag-theme-alpine .ag-cell,
+    .ag-theme-alpine-dark .ag-header-cell-label,
+    .ag-theme-alpine .ag-header-cell-label {
+        font-size: 12px !important;
+    }
+
+    /* Reduce chart margins */
+    .js-plotly-plot {
+        margin: 0 !important;
+    }
+}
+
+/* MOBILE (below 768px) */
+@media (max-width: 768px) {
+    /* Full width page padding */
+    #page-content > div {
+        padding: 10px !important;
+    }
+
+    /* Stack header elements */
+    h4 { font-size: 16px !important; }
+    h5 { font-size: 14px !important; }
+    h6 { font-size: 13px !important; }
+
+    /* Login form - full width */
+    .card {
+        margin: 0 5px !important;
+    }
+
+    /* Buttons - compact */
+    .btn-sm {
+        font-size: 12px !important;
+        padding: 4px 8px !important;
+    }
+
+    .btn {
+        font-size: 13px !important;
+    }
+
+    /* Refresh strip - wrap to multiple lines */
+    #refresh-status {
+        display: block !important;
+        margin-top: 8px !important;
+        margin-left: 0 !important;
+    }
+
+    /* Tabs - full width */
+    .nav-tabs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+    }
+
+    .nav-tabs .nav-link {
+        padding: 5px 10px !important;
+        font-size: 12px !important;
+        white-space: nowrap !important;
+    }
+
+    /* Filters - tighter */
+    .accordion-body {
+        padding: 8px !important;
+    }
+
+    .accordion-button {
+        padding: 6px 10px !important;
+        font-size: 13px !important;
+    }
+
+    .filter-title {
+        font-size: 10px !important;
+        margin-bottom: 4px !important;
+        padding-bottom: 2px !important;
+    }
+
+    /* Form controls - smaller */
+    .form-control, .form-select {
+        font-size: 13px !important;
+        padding: 4px 8px !important;
+    }
+
+    .form-check-label {
+        font-size: 12px !important;
+    }
+
+    /* Date picker - prevent overflow */
+    .DateInput {
+        width: 100% !important;
+    }
+
+    .DateInput_input {
+        font-size: 12px !important;
+        padding: 4px 8px !important;
+    }
+
+    /* AG Grid - scrollable + compact */
+    .ag-theme-alpine-dark,
+    .ag-theme-alpine {
+        font-size: 11px !important;
+    }
+
+    .ag-theme-alpine-dark .ag-cell,
+    .ag-theme-alpine .ag-cell {
+        padding: 2px 6px !important;
+        font-size: 11px !important;
+    }
+
+    .ag-theme-alpine-dark .ag-header-cell,
+    .ag-theme-alpine .ag-header-cell {
+        padding: 2px 6px !important;
+        font-size: 11px !important;
+    }
+
+    /* Charts - stack vertically */
+    .row > [class*="col-"] {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Chart height - shorter on mobile */
+    .js-plotly-plot .plot-container {
+        max-height: 300px !important;
+    }
+
+    /* Legend - smaller */
+    .legend-container span,
+    div[style*="flexWrap"] span {
+        font-size: 11px !important;
+    }
+
+    /* Tables - horizontal scroll */
+    .table-responsive,
+    .table {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* Modal - full width on mobile */
+    .modal-dialog {
+        margin: 10px !important;
+        max-width: calc(100% - 20px) !important;
+    }
+
+    /* Dropdown menu */
+    .dropdown-menu {
+        font-size: 13px !important;
+    }
+
+    /* Alert messages */
+    .alert {
+        font-size: 13px !important;
+        padding: 8px 12px !important;
+    }
+}
+
+/* SMALL MOBILE (below 480px) */
+@media (max-width: 480px) {
+    #page-content > div {
+        padding: 6px !important;
+    }
+
+    h4 { font-size: 14px !important; }
+
+    .btn-sm {
+        font-size: 11px !important;
+        padding: 3px 6px !important;
+    }
+
+    /* Hide emoji prefixes on very small screens to save space */
+    .nav-tabs .nav-link {
+        font-size: 11px !important;
+    }
+
+    /* Even more compact AG Grid */
+    .ag-theme-alpine-dark .ag-cell,
+    .ag-theme-alpine .ag-cell {
+        font-size: 10px !important;
+        padding: 1px 4px !important;
+    }
+}
