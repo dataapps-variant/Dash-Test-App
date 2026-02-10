@@ -176,16 +176,9 @@ THEME_COLORS = {
 # DEFAULT USERS
 # =============================================================================
 DEFAULT_USERS = {
-    "superadmin": {
-        "password": "superadmin123",
-        "role": "super_admin",
-        "name": "Super Administrator",
-        "dashboards": "all",
-        "app_access": {}
-    },
     "admin": {
         "password": "admin123",
-        "role": "admin",
+        "role": "super_admin",
         "name": "Administrator",
         "dashboards": "all",
         "app_access": {}
