@@ -1259,7 +1259,6 @@ def handle_refresh(bq_clicks, gcs_clicks):
         return no_update
     
     if ctx.triggered_id == "refresh-bq-btn":
-        if ctx.triggered_id == "refresh-bq-btn":
         success, msg = refresh_bq_to_staging()
         if success:
             return dbc.Alert(msg, color="success", dismissable=True)
@@ -1272,11 +1271,6 @@ def handle_refresh(bq_clicks, gcs_clicks):
             return dbc.Alert(msg, color="success", dismissable=True)
         else:
             return dbc.Alert(f"⚠️ Refresh failed: {msg}", color="danger", dismissable=True)
-    
-    elif ctx.triggered_id == "refresh-gcs-btn":
-        success, msg = refresh_gcs_from_staging()
-        color = "success" if success else "danger"
-        return dbc.Alert(msg, color=color, dismissable=True)
     
     return no_update
 
