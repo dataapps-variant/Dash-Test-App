@@ -3,7 +3,7 @@ Authentication System for Variant Analytics Dashboard - Dash Version
 - GCS-backed persistent user database
 - GCS-backed session storage for cross-instance persistence
 - Simple username/password auth
-- Roles: admin (all access) and readonly (selected dashboards)
+- Roles: super_admin (full control), admin (manage readonly), readonly (selected dashboards/apps)
 """
 
 import json
@@ -246,7 +246,8 @@ def authenticate(username, password, remember_me=False):
                 "username": username,
                 "role": users[username]["role"],
                 "name": users[username]["name"],
-                "dashboards": users[username]["dashboards"]
+                "dashboards": users[username]["dashboards"],
+                "app_access": users[username].get("app_access", {})
             }
             session_id, expires_at = create_session(user_data, remember_me)
             return True, session_id, expires_at
@@ -282,10 +283,18 @@ def get_current_user(session_id):
 
 
 def is_admin(session_id):
-    """Check if current user is admin"""
+    """Check if current user is admin or super_admin"""
     user = get_current_user(session_id)
     if user:
-        return user.get("role") == "admin"
+        return user.get("role") in ("admin", "super_admin")
+    return False
+
+
+def is_super_admin(session_id):
+    """Check if current user is super_admin"""
+    user = get_current_user(session_id)
+    if user:
+        return user.get("role") == "super_admin"
     return False
 
 
@@ -300,8 +309,8 @@ def can_access_dashboard(session_id, dashboard_id):
     if not dashboard or not dashboard.get("enabled", False):
         return False
     
-    # Admin has access to all
-    if user.get("role") == "admin" or user.get("dashboards") == "all":
+    # Admin and super_admin have access to all
+    if user.get("role") in ("admin", "super_admin") or user.get("dashboards") == "all":
         return True
     
     return dashboard_id in user.get("dashboards", [])
@@ -313,7 +322,7 @@ def get_accessible_dashboards(session_id):
     if not user:
         return []
     
-    if user.get("role") == "admin" or user.get("dashboards") == "all":
+    if user.get("role") in ("admin", "super_admin") or user.get("dashboards") == "all":
         return DASHBOARDS
     
     accessible = []
@@ -332,7 +341,7 @@ def get_dashboard_access_for_user(username):
         return []
     
     user_data = users[username]
-    if user_data["role"] == "admin" or user_data["dashboards"] == "all":
+    if user_data["role"] in ("admin", "super_admin") or user_data["dashboards"] == "all":
         return "all"
     
     return user_data.get("dashboards", [])
@@ -352,6 +361,82 @@ def get_readonly_users_for_dashboard(dashboard_id):
 
 
 # =============================================================================
+# APP ACCESS FUNCTIONS
+# =============================================================================
+
+def get_user_allowed_apps(user, dashboard_id):
+    """
+    Get allowed app names for a user on a specific dashboard.
+    Returns None for full access (admin/super_admin or no restrictions set).
+    Returns a list of app names for restricted access.
+    """
+    if not user:
+        return []
+    
+    role = user.get("role", "readonly")
+    
+    # Admin and super_admin always have full access
+    if role in ("admin", "super_admin"):
+        return None
+    
+    # For readonly users, check app_access
+    app_access = user.get("app_access", {})
+    
+    # No app_access configured at all = full access (backward compatibility)
+    if not app_access:
+        return None
+    
+    # Dashboard not in app_access = full access for this dashboard
+    if dashboard_id not in app_access:
+        return None
+    
+    # Return the list of allowed apps for this dashboard
+    return app_access.get(dashboard_id, [])
+
+
+def get_user_app_access_from_db(username):
+    """Get app_access dict for a user directly from the database"""
+    users = get_users_db()
+    if username not in users:
+        return {}
+    return users[username].get("app_access", {})
+
+
+# =============================================================================
+# ROLE HIERARCHY FUNCTIONS
+# =============================================================================
+
+def can_manage_user(current_role, target_role):
+    """Check if current role can edit/manage a user with target role"""
+    if current_role == "super_admin":
+        return True  # Super admin can manage everyone
+    if current_role == "admin" and target_role == "readonly":
+        return True  # Admin can manage readonly users
+    return False
+
+
+def can_delete_user(current_role, target_user_id, target_role):
+    """Check if current role can delete a specific user"""
+    # Super admin account can never be deleted from UI
+    if target_role == "super_admin":
+        return False
+    if current_role == "super_admin":
+        return True  # Super admin can delete admin and readonly
+    if current_role == "admin" and target_role == "readonly":
+        return True  # Admin can delete readonly
+    return False
+
+
+def get_assignable_roles(current_role):
+    """Get list of roles that the current role can assign to users"""
+    if current_role == "super_admin":
+        return ["admin", "readonly"]  # Can assign admin or readonly (not super_admin)
+    if current_role == "admin":
+        return ["readonly"]  # Can only assign readonly
+    return []
+
+
+# =============================================================================
 # ADMIN FUNCTIONS
 # =============================================================================
 
@@ -360,26 +445,31 @@ def get_all_users():
     return get_users_db()
 
 
-def add_user(user_id, password, role, name, dashboards):
-    """Add a new user (admin only)"""
+def add_user(user_id, password, role, name, dashboards, app_access=None):
+    """Add a new user"""
     users = get_users_db()
     
     if user_id in users:
         return False, "User ID already exists"
     
+    # Super admin role cannot be created from UI
+    if role == "super_admin":
+        return False, "Cannot create Super Admin users"
+    
     users[user_id] = {
         "password": password,
         "role": role,
         "name": name,
-        "dashboards": dashboards if role == "readonly" else "all"
+        "dashboards": dashboards if role == "readonly" else "all",
+        "app_access": app_access if app_access and role == "readonly" else {}
     }
     
     update_users_db(users)
     return True, "User created successfully"
 
 
-def update_user(user_id, password=None, role=None, name=None, dashboards=None):
-    """Update existing user (admin only)"""
+def update_user(user_id, password=None, role=None, name=None, dashboards=None, app_access=None):
+    """Update existing user"""
     users = get_users_db()
     
     if user_id not in users:
@@ -389,27 +479,31 @@ def update_user(user_id, password=None, role=None, name=None, dashboards=None):
         users[user_id]["password"] = password
     if role:
         users[user_id]["role"] = role
-        # If role changed to admin, set dashboards to all
-        if role == "admin":
+        # If role changed to admin, set dashboards to all and clear app_access
+        if role in ("admin", "super_admin"):
             users[user_id]["dashboards"] = "all"
+            users[user_id]["app_access"] = {}
     if name:
         users[user_id]["name"] = name
     if dashboards is not None and users[user_id]["role"] == "readonly":
         users[user_id]["dashboards"] = dashboards
+    if app_access is not None and users[user_id]["role"] == "readonly":
+        users[user_id]["app_access"] = app_access
     
     update_users_db(users)
     return True, "User updated successfully"
 
 
 def delete_user(user_id):
-    """Delete a user (admin only)"""
+    """Delete a user"""
     users = get_users_db()
     
     if user_id not in users:
         return False, "User not found"
     
-    if user_id == "admin":
-        return False, "Cannot delete admin user"
+    # Protect super_admin from deletion
+    if users[user_id]["role"] == "super_admin":
+        return False, "Cannot delete Super Admin user"
     
     del users[user_id]
     update_users_db(users)
