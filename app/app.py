@@ -988,7 +988,8 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
                 dag.AgGrid(
                     rowData=df_regular.to_dict('records'),
                     columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_regular.columns],
-                    defaultColDef={"resizable": True, "sortable": True, "filter": True},
+                    defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
+                    columnSize="autoSize",
                     className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
                     style={"height": "400px"}
                 )
@@ -1001,7 +1002,8 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
                 dag.AgGrid(
                     rowData=df_crystal.to_dict('records'),
                     columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_crystal.columns],
-                    defaultColDef={"resizable": True, "sortable": True, "filter": True},
+                    defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
+                    columnSize="autoSize",
                     className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
                     style={"height": "400px"}
                 )
@@ -1114,7 +1116,8 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
                 dag.AgGrid(
                     rowData=df_regular.to_dict('records'),
                     columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_regular.columns],
-                    defaultColDef={"resizable": True, "sortable": True, "filter": True},
+                    defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
+                    columnSize="autoSize",
                     className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
                     style={"height": "400px"}
                 )
@@ -1127,7 +1130,8 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
                 dag.AgGrid(
                     rowData=df_crystal.to_dict('records'),
                     columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_crystal.columns],
-                    defaultColDef={"resizable": True, "sortable": True, "filter": True},
+                    defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
+                    columnSize="autoSize",
                     className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
                     style={"height": "400px"}
                 )
