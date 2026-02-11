@@ -212,27 +212,34 @@ html, body {
     color: #FFFFFF !important;
 }
 
-/* Date picker - grey background to match dropdowns */
-.DateInput {
+/* Date picker - FULL dark override for react-dates */
+.DateInput,
+.DateInput_1 {
     background-color: #111111 !important;
+    width: 100% !important;
 }
 
-.DateInput_input {
+.DateInput_input,
+.DateInput_input_1 {
     background-color: #111111 !important;
     color: #FFFFFF !important;
     border: 1px solid #333333 !important;
     border-radius: 4px !important;
     font-size: 14px !important;
     padding: 6px 10px !important;
+    font-weight: 400 !important;
 }
 
-.DateInput_input__focused {
+.DateInput_input__focused,
+.DateInput_input__focused_2 {
     border-color: #666666 !important;
 }
 
-.SingleDatePickerInput {
+.SingleDatePickerInput,
+.SingleDatePickerInput_1 {
     background-color: #111111 !important;
     border: none !important;
+    border-radius: 4px !important;
 }
 
 .SingleDatePickerInput__withBorder {
@@ -240,50 +247,57 @@ html, body {
     background-color: #111111 !important;
 }
 
-.CalendarDay__selected,
-.CalendarDay__selected:hover {
-    background: #FFFFFF !important;
-    color: #000000 !important;
-    border: 1px solid #FFFFFF !important;
-}
-
-.CalendarDay__hovered_span,
-.CalendarDay__hovered_span:hover {
-    background: #333333 !important;
-    color: #FFFFFF !important;
-}
-
-.DayPickerNavigation_button {
+.SingleDatePicker_picker,
+.SingleDatePicker_picker_1,
+.SingleDatePicker_picker__directionLeft,
+.SingleDatePicker_picker__directionLeft_2 {
     background-color: #111111 !important;
-    border: 1px solid #333333 !important;
-}
-
-.DayPickerNavigation_svg__horizontal {
-    fill: #FFFFFF !important;
-}
-
-.CalendarMonth_caption {
-    color: #FFFFFF !important;
 }
 
 .DayPicker,
-.DayPicker__horizontal {
+.DayPicker_1,
+.DayPicker__horizontal,
+.DayPicker__horizontal_2 {
+    background: #111111 !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8) !important;
+}
+
+.DayPicker_transitionContainer,
+.DayPicker_transitionContainer_1 {
     background-color: #111111 !important;
 }
 
-.DayPicker_transitionContainer {
+.DayPicker_weekHeader,
+.DayPicker_weekHeader_1 {
+    color: #999999 !important;
+}
+
+.DayPicker_weekHeader small {
+    color: #999999 !important;
+}
+
+.CalendarMonthGrid,
+.CalendarMonthGrid_1 {
     background-color: #111111 !important;
 }
 
-.CalendarMonthGrid {
+.CalendarMonth,
+.CalendarMonth_1 {
     background-color: #111111 !important;
 }
 
-.CalendarMonth {
-    background-color: #111111 !important;
+.CalendarMonth_caption,
+.CalendarMonth_caption_1 {
+    color: #FFFFFF !important;
 }
 
-.CalendarDay__default {
+.CalendarMonth_caption strong {
+    color: #FFFFFF !important;
+    font-weight: 500 !important;
+}
+
+.CalendarDay__default,
+.CalendarDay__default_1 {
     background-color: #111111 !important;
     color: #FFFFFF !important;
     border: 1px solid #222222 !important;
@@ -295,17 +309,54 @@ html, body {
     border: 1px solid #444444 !important;
 }
 
-.CalendarDay__blocked_out_of_range {
-    color: #444444 !important;
+.CalendarDay__selected,
+.CalendarDay__selected:hover,
+.CalendarDay__selected:active {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    border: 1px solid #FFFFFF !important;
+}
+
+.CalendarDay__blocked_out_of_range,
+.CalendarDay__blocked_out_of_range:hover {
+    color: #333333 !important;
     background-color: #111111 !important;
+    border: 1px solid #1A1A1A !important;
+}
+
+.DayPickerNavigation_button,
+.DayPickerNavigation_button_1 {
+    background-color: #1A1A1A !important;
+    border: 1px solid #333333 !important;
+    border-radius: 4px !important;
+}
+
+.DayPickerNavigation_button:hover {
+    background-color: #333333 !important;
+}
+
+.DayPickerNavigation_svg__horizontal {
+    fill: #FFFFFF !important;
 }
 
 .DayPickerKeyboardShortcuts_buttonReset {
     display: none !important;
 }
 
-.DateInput_fang {
+.DateInput_fang,
+.DateInput_fang_1 {
     display: none !important;
+}
+
+.CalendarDay__today {
+    font-weight: 700 !important;
+    color: #10B981 !important;
+}
+
+/* Month/Year select dropdowns in calendar */
+select.CalendarMonth_caption select {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
 }
 
 /* Accordion */
