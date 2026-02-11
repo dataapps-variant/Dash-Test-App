@@ -1018,6 +1018,12 @@ app.clientside_callback(
     color: #FFFFFF !important;
     border-color: #333333 !important;
 }
+.CalendarMonth_caption select,
+[class*="CalendarMonth_caption"] select {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #333333 !important;
+}
                 .DateInput, .DateInput input, [class*="DateInput"] input,
                 .SingleDatePickerInput, [class*="SingleDatePickerInput"] {
                     background-color: #111111 !important;
