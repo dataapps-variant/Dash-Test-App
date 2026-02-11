@@ -237,12 +237,20 @@ html, body {
 
 .SingleDatePickerInput__withBorder {
     border: none !important;
-    background-color: transparent !important;
+    background-color: #111111 !important;
 }
 
-.CalendarDay__selected {
+.CalendarDay__selected,
+.CalendarDay__selected:hover {
     background: #FFFFFF !important;
     color: #000000 !important;
+    border: 1px solid #FFFFFF !important;
+}
+
+.CalendarDay__hovered_span,
+.CalendarDay__hovered_span:hover {
+    background: #333333 !important;
+    color: #FFFFFF !important;
 }
 
 .DayPickerNavigation_button {
@@ -250,37 +258,61 @@ html, body {
     border: 1px solid #333333 !important;
 }
 
+.DayPickerNavigation_svg__horizontal {
+    fill: #FFFFFF !important;
+}
+
 .CalendarMonth_caption {
     color: #FFFFFF !important;
 }
 
-.DayPicker {
-    background-color: #0A0A0A !important;
+.DayPicker,
+.DayPicker__horizontal {
+    background-color: #111111 !important;
+}
+
+.DayPicker_transitionContainer {
+    background-color: #111111 !important;
 }
 
 .CalendarMonthGrid {
-    background-color: #0A0A0A !important;
+    background-color: #111111 !important;
 }
 
 .CalendarMonth {
-    background-color: #0A0A0A !important;
+    background-color: #111111 !important;
 }
 
 .CalendarDay__default {
-    background-color: #0A0A0A !important;
+    background-color: #111111 !important;
     color: #FFFFFF !important;
-    border: 1px solid #1C1C1C !important;
+    border: 1px solid #222222 !important;
 }
 
 .CalendarDay__default:hover {
-    background-color: #1A1A1A !important;
+    background-color: #333333 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #444444 !important;
+}
+
+.CalendarDay__blocked_out_of_range {
+    color: #444444 !important;
+    background-color: #111111 !important;
+}
+
+.DayPickerKeyboardShortcuts_buttonReset {
+    display: none !important;
+}
+
+.DateInput_fang {
+    display: none !important;
 }
 
 /* Accordion */
 .accordion-button {
     background-color: #0A0A0A !important;
     color: #FFFFFF !important;
-    border: 1px solid #1C1C1C !important;
+    border: none !important;
 }
 
 .accordion-button:not(.collapsed) {
@@ -291,6 +323,15 @@ html, body {
 
 .accordion-button::after {
     filter: invert(1) !important;
+}
+
+.accordion-item {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.accordion {
+    --bs-accordion-border-color: transparent !important;
 }
 
 /* Accordion body - subtle greyish background */
