@@ -1032,6 +1032,17 @@ app.clientside_callback(
 [class*="dash-datepicker-calendar"] div {
     background-color: #111111 !important;
 }
+.dash-dropdown, button.dash-dropdown {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+    border-color: #333333 !important;
+}
+.dash-dropdown-option, .dash-options-list-option {
+    color: #FFFFFF !important;
+}
+.dash-options-list-option:hover {
+    background-color: #333333 !important;
+}
                 .DateInput, .DateInput input, [class*="DateInput"] input,
                 .SingleDatePickerInput, [class*="SingleDatePickerInput"] {
                     background-color: #111111 !important;
