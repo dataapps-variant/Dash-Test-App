@@ -999,6 +999,60 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
+# Force dark date picker - injects CSS after react-dates loads
+app.clientside_callback(
+    """
+    function(tab) {
+        var style = document.getElementById('datepicker-dark-override');
+        if (!style) {
+            style = document.createElement('style');
+            style.id = 'datepicker-dark-override';
+            style.textContent = `
+                .DateInput, .DateInput input, [class*="DateInput"] input,
+                .SingleDatePickerInput, [class*="SingleDatePickerInput"] {
+                    background-color: #111111 !important;
+                    color: #FFFFFF !important;
+                    border-color: #333333 !important;
+                }
+                .SingleDatePicker_picker, [class*="SingleDatePicker_picker"] {
+                    background-color: #111111 !important;
+                }
+                .DayPicker, [class*="DayPicker_"], [class*="DayPicker__"],
+                .DayPicker_transitionContainer, .CalendarMonthGrid,
+                .CalendarMonth, [class*="CalendarMonth_"] {
+                    background-color: #111111 !important;
+                }
+                .CalendarDay__default, [class*="CalendarDay__default"] {
+                    background-color: #111111 !important;
+                    color: #FFFFFF !important;
+                    border: 1px solid #222222 !important;
+                }
+                .CalendarDay__default:hover {
+                    background-color: #333333 !important;
+                }
+                .CalendarDay__selected, [class*="CalendarDay__selected"] {
+                    background-color: #FFFFFF !important;
+                    color: #000000 !important;
+                    border: 1px solid #FFFFFF !important;
+                }
+                .CalendarDay__blocked_out_of_range, [class*="CalendarDay__blocked"] {
+                    color: #333333 !important;
+                    background-color: #111111 !important;
+                }
+                .DayPicker_weekHeader small { color: #999999 !important; }
+                .CalendarMonth_caption, .CalendarMonth_caption strong { color: #FFFFFF !important; }
+                [class*="DateInput_fang"], [class*="DayPickerKeyboardShortcuts"] { display: none !important; }
+                [class*="DayPickerNavigation_button"] { background-color: #1A1A1A !important; border: 1px solid #333333 !important; }
+                [class*="DayPickerNavigation_svg"] { fill: #FFFFFF !important; }
+            `;
+            document.head.appendChild(style);
+        }
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output('dashboard-tabs', 'className'),
+    Input('dashboard-tabs', 'active_tab')
+)
 
 # =============================================================================
 # ADMIN PANEL CALLBACKS
