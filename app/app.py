@@ -416,22 +416,24 @@ def create_landing_layout(user, theme="dark"):
         role_text = "Read Only"
     
     return html.Div([
-        # Header with menu
+       # Header with menu
         dbc.Row([
             dbc.Col(width=9),
             dbc.Col([
-                dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
-                dbc.DropdownMenu(
-                    label=":",
-                    children=[
-                        dbc.DropdownMenuItem("Admin Panel", id="admin-panel-btn") if show_admin else None,
-                        dbc.DropdownMenuItem(divider=True) if show_admin else None,
-                        dbc.DropdownMenuItem(f"User: {user['name']}", disabled=True) if user else None,
-                        dbc.DropdownMenuItem(f"Role: {role_text}", disabled=True) if user else None,
-                    ],
-                    
-                    color="secondary"
-                )
+                html.Div([
+                    dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
+                    dbc.DropdownMenu(
+                        label=":",
+                        children=[
+                            dbc.DropdownMenuItem("Admin Panel", id="admin-panel-btn") if show_admin else None,
+                            dbc.DropdownMenuItem(divider=True) if show_admin else None,
+                            dbc.DropdownMenuItem(f"User: {user['name']}", disabled=True) if user else None,
+                            dbc.DropdownMenuItem(f"Role: {role_text}", disabled=True) if user else None,
+                        ],
+                        
+                        color="secondary"
+                    )
+                ], style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end"})
             ], width=3, style={"textAlign": "right"})
         ], className="mb-3"),
         
