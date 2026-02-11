@@ -1010,6 +1010,14 @@ app.clientside_callback(
             style = document.createElement('style');
             style.id = 'datepicker-dark-override';
             style.textContent = `
+                .dash-datepicker-input,
+.dash-datepicker-input-wrapper,
+.dash-datepicker,
+[class*="dash-datepicker"] {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+    border-color: #333333 !important;
+}
                 .DateInput, .DateInput input, [class*="DateInput"] input,
                 .SingleDatePickerInput, [class*="SingleDatePickerInput"] {
                     background-color: #111111 !important;
