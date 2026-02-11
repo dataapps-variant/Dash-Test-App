@@ -77,29 +77,29 @@ def preload_data():
     logger = logging.getLogger(__name__)
     
     try:
-        logger.info("🚀 Preloading data at startup...")
+        logger.info("Preloading data at startup...")
         start = datetime.now()
         
         # Load date bounds
         date_bounds = load_date_bounds()
-        logger.info(f"  ✓ Date bounds loaded: {date_bounds['min_date']} to {date_bounds['max_date']}")
+        logger.info(f"  Date bounds loaded: {date_bounds['min_date']} to {date_bounds['max_date']}")
         
         # Load plan groups for both active and inactive
         active_plans = load_plan_groups("Active")
-        logger.info(f"  ✓ Active plans loaded: {len(active_plans.get('Plan_Name', []))} plans")
+        logger.info(f"  Active plans loaded: {len(active_plans.get('Plan_Name', []))} plans")
         
         inactive_plans = load_plan_groups("Inactive")
-        logger.info(f"  ✓ Inactive plans loaded: {len(inactive_plans.get('Plan_Name', []))} plans")
+        logger.info(f"  Inactive plans loaded: {len(inactive_plans.get('Plan_Name', []))} plans")
         
         # Get cache info
         cache_info = get_cache_info()
-        logger.info(f"  ✓ Cache info loaded")
+        logger.info(f"  Cache info loaded")
         
         elapsed = (datetime.now() - start).total_seconds()
-        logger.info(f"✅ Preloading complete in {elapsed:.2f}s")
+        logger.info(f"Preloading complete in {elapsed:.2f}s")
         
     except Exception as e:
-        logger.error(f"❌ Preloading failed: {e}")
+        logger.error(f"Preloading failed: {e}")
 
 # Preload data when the module is imported (happens once with --preload)
 preload_data()
@@ -366,7 +366,7 @@ def create_landing_layout(user, theme="dark"):
     table_rows = []
     for dashboard in DASHBOARDS:
         is_enabled = dashboard.get("enabled", False)
-        status = "✅ Active" if is_enabled else "⏸️ Disabled"
+        status = "Active" if is_enabled else "Disabled"
         bq_display = cache_info.get("last_bq_refresh", "--") if is_enabled else "--"
         gcs_display = cache_info.get("last_gcs_refresh", "--") if is_enabled else "--"
         
@@ -374,7 +374,7 @@ def create_landing_layout(user, theme="dark"):
             # Clickable row — dashboard name is a styled button
             name_cell = html.Td(
                 html.A(
-                    f"📊 {dashboard['name']}",
+                    dashboard['name'],
                     id=f"nav-btn-{dashboard['id']}",
                     style={
                         "color": "#FFFFFF",
@@ -420,11 +420,11 @@ def create_landing_layout(user, theme="dark"):
         dbc.Row([
             dbc.Col(width=9),
             dbc.Col([
-                dbc.Button("🚪 Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
+                dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
                 dbc.DropdownMenu(
-                    label="⋮",
+                    label=":",
                     children=[
-                        dbc.DropdownMenuItem("🔧 Admin Panel", id="admin-panel-btn") if show_admin else None,
+                        dbc.DropdownMenuItem("Admin Panel", id="admin-panel-btn") if show_admin else None,
                         dbc.DropdownMenuItem(divider=True) if show_admin else None,
                         dbc.DropdownMenuItem(f"User: {user['name']}", disabled=True) if user else None,
                         dbc.DropdownMenuItem(f"Role: {role_text}", disabled=True) if user else None,
@@ -439,7 +439,7 @@ def create_landing_layout(user, theme="dark"):
         get_header_component(theme, "large", True, True, user["name"] if user else ""),
         
         # Unified clickable dashboard table
-        html.H4("📊 Available Dashboards", className="mb-3"),
+        html.H4("Available Dashboards", className="mb-3"),
         dbc.Table(
             [table_header, table_body],
             striped=True, bordered=True, hover=True, className="mb-4"
@@ -457,38 +457,37 @@ def create_icarus_historical_layout(user, theme="dark"):
     cache_info = get_cache_info()
     
     return html.Div([
-        # Header
+        # Header - Back + Title left-center, Logout right
         dbc.Row([
             dbc.Col([
-                dbc.Button("← Back", id="back-to-landing", color="secondary", size="sm")
-            ], width=2),
-            dbc.Col([
-                html.H4(
-                    "ICARUS - Plan (Historical)",
-                    style={"textAlign": "center", "color": colors["text_primary"], "margin": "0"}
-                )
+                html.Div([
+                    dbc.Button("\u2190 Back", id="back-to-landing", color="secondary", size="sm"),
+                    html.Span(
+                        "ICARUS - Plan (Historical)",
+                        style={"color": colors["text_primary"], "fontWeight": "600", "fontSize": "18px", "marginLeft": "16px", "verticalAlign": "middle"}
+                    )
+                ], style={"display": "flex", "alignItems": "center"})
             ], width=8),
             dbc.Col([
-                dbc.Button("🚪 Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
+                dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
                 dbc.DropdownMenu(
-                    label="⋮",
+                    label=":",
                     children=[
-                        dbc.DropdownMenuItem("📄 Export Full Dashboard as PDF", disabled=True),
+                        dbc.DropdownMenuItem("Export Full Dashboard as PDF", disabled=True),
                         dbc.DropdownMenuItem(divider=True),
                         dbc.DropdownMenuItem(f"User: {user['name']}" if user else "User: --", disabled=True),
                     ],
                     
                     color="secondary"
                 )
-            ], width=2, style={"textAlign": "right"})
+            ], width=4, style={"textAlign": "right"})
         ], className="mb-2", align="center"),
         
         # Refresh section - compact inline strip
         html.Div([
-            html.Span("🔄", style={"marginRight": "8px"}),
-            dbc.Button("Refresh BQ", id="refresh-bq-btn", color="primary", size="sm"),
+            dbc.Button("Refresh BQ", id="refresh-bq-btn", size="sm", className="refresh-btn-green"),
             html.Small(f"  Last: {cache_info.get('last_bq_refresh', '--')}  ", style={"color": colors["text_secondary"], "margin": "0 16px 0 8px"}),
-            dbc.Button("Refresh GCS", id="refresh-gcs-btn", color="primary", size="sm"),
+            dbc.Button("Refresh GCS", id="refresh-gcs-btn", size="sm", className="refresh-btn-green"),
             html.Small(f"  Last: {cache_info.get('last_gcs_refresh', '--')}", style={"color": colors["text_secondary"], "marginLeft": "8px"}),
             html.Div(id="refresh-status", style={"display": "inline-block", "marginLeft": "16px"})
         ], style={"textAlign": "right", "padding": "6px 0", "marginBottom": "8px"}),
@@ -500,7 +499,7 @@ def create_icarus_historical_layout(user, theme="dark"):
                     html.Div(id="active-tab-content"),
                     type="dot", color="#FFFFFF"
                 ),
-                label="📈 Active",
+                label="Active",
                 tab_id="active"
             ),
             dbc.Tab(
@@ -508,7 +507,7 @@ def create_icarus_historical_layout(user, theme="dark"):
                     html.Div(id="inactive-tab-content"),
                     type="dot", color="#FFFFFF"
                 ),
-                label="📉 Inactive",
+                label="Inactive",
                 tab_id="inactive"
             )
         ], id="dashboard-tabs", active_tab="active", className="mb-2"),
@@ -573,7 +572,7 @@ def create_filters_layout(plan_groups, min_date, max_date, prefix, theme="dark")
                         "cursor": "pointer",
                         "color": "#999999",
                         "fontSize": "12px",
-                        "display": "block" if extra_count > 0 else "none",
+                        "display": "block",
                         "marginTop": "4px"
                     }
                 )
@@ -626,18 +625,18 @@ def create_filters_layout(plan_groups, min_date, max_date, prefix, theme="dark")
                         value=DEFAULT_COHORT
                     )
                 ], width=2),
+                dbc.Col(width=3),
                 dbc.Col([
-                    html.Div(" ", className="filter-title"),
-                    dbc.Button("🔄 Reset", id=f"{prefix}-reset-btn", color="secondary", className="w-100")
+                    dbc.Button("Reset", id=f"{prefix}-reset-btn", color="secondary", className="w-100", style={"marginTop": "22px"})
                 ], width=2)
            ], className="mb-2"),
             
-            html.Hr(style={"margin": "8px 0"}),
+            html.Hr(style={"margin": "10px 0"}),
             
             # Row 2: Plan Groups
             html.Div("Plan Groups", className="filter-title"),
-            dbc.Row(plan_checkboxes[:6]),
-            dbc.Row(plan_checkboxes[6:]) if len(plan_checkboxes) > 6 else None,
+            dbc.Row(plan_checkboxes[:6], className="mb-2"),
+            dbc.Row(plan_checkboxes[6:], className="mb-2") if len(plan_checkboxes) > 6 else None,
             
             html.Hr(),
             
@@ -653,7 +652,7 @@ def create_filters_layout(plan_groups, min_date, max_date, prefix, theme="dark")
                     )
                 ])
             ])
-        ], title="📊 Filters")
+        ], title="Filters")
     ], start_collapsed=False)
 
 
@@ -677,7 +676,7 @@ def create_admin_layout(theme="dark"):
                 # Users section header
                 dbc.Row([
                     dbc.Col([
-                        html.H5("👥 Users", className="mb-0")
+                        html.H5("Users", className="mb-0")
                     ], width=8),
                     dbc.Col([
                         dbc.Button("+ Add New User", id="admin-add-user-btn", color="primary", size="sm")
@@ -1599,10 +1598,10 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
         pivot_content = []
         
         if regular_error:
-            pivot_content.append(dbc.Alert(f"⚠️ Data loading failed: {regular_error}", color="danger"))
+            pivot_content.append(dbc.Alert(f"Data loading failed: {regular_error}", color="danger"))
         
         if df_regular is not None and not df_regular.empty:
-            pivot_content.append(html.H5("📊 Plan Overview (Regular)"))
+            pivot_content.append(html.H5("Plan Overview (Regular)"))
             pivot_content.append(
                 dag.AgGrid(
                     rowData=df_regular.to_dict('records'),
@@ -1616,11 +1615,11 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
             )
         
         if crystal_error:
-            pivot_content.append(dbc.Alert(f"⚠️ Data loading failed: {crystal_error}", color="danger"))
+            pivot_content.append(dbc.Alert(f"Data loading failed: {crystal_error}", color="danger"))
         
         if df_crystal is not None and not df_crystal.empty:
             pivot_content.append(html.Br())
-            pivot_content.append(html.H5("🔮 Plan Overview (Crystal Ball)"))
+            pivot_content.append(html.H5("Plan Overview (Crystal Ball)"))
             pivot_content.append(
                 dag.AgGrid(
                     rowData=df_crystal.to_dict('records'),
@@ -1682,7 +1681,7 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
         return html.Div(pivot_content), html.Div(charts_content)
         
     except Exception as e:
-        return dbc.Alert(f"⚠️ Data loading failed: {str(e)}", color="danger"), None
+        return dbc.Alert(f"Data loading failed: {str(e)}", color="danger"), None
 
 
 @callback(
@@ -1755,10 +1754,10 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
         pivot_content = []
         
         if regular_error:
-            pivot_content.append(dbc.Alert(f"⚠️ Data loading failed: {regular_error}", color="danger"))
+            pivot_content.append(dbc.Alert(f"Data loading failed: {regular_error}", color="danger"))
         
         if df_regular is not None and not df_regular.empty:
-            pivot_content.append(html.H5("📊 Plan Overview (Regular)"))
+            pivot_content.append(html.H5("Plan Overview (Regular)"))
             pivot_content.append(
                 dag.AgGrid(
                     rowData=df_regular.to_dict('records'),
@@ -1772,11 +1771,11 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
             )
         
         if crystal_error:
-            pivot_content.append(dbc.Alert(f"⚠️ Data loading failed: {crystal_error}", color="danger"))
+            pivot_content.append(dbc.Alert(f"Data loading failed: {crystal_error}", color="danger"))
         
         if df_crystal is not None and not df_crystal.empty:
             pivot_content.append(html.Br())
-            pivot_content.append(html.H5("🔮 Plan Overview (Crystal Ball)"))
+            pivot_content.append(html.H5("Plan Overview (Crystal Ball)"))
             pivot_content.append(
                 dag.AgGrid(
                     rowData=df_crystal.to_dict('records'),
@@ -1838,7 +1837,7 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
         return html.Div(pivot_content), html.Div(charts_content)
         
     except Exception as e:
-        return dbc.Alert(f"⚠️ Data loading failed: {str(e)}", color="danger"), None
+        return dbc.Alert(f"Data loading failed: {str(e)}", color="danger"), None
 
 
 @callback(
@@ -1857,14 +1856,14 @@ def handle_refresh(bq_clicks, gcs_clicks):
         if success:
             return dbc.Alert(msg, color="success", dismissable=True)
         else:
-            return dbc.Alert(f"⚠️ Refresh failed: {msg}", color="danger", dismissable=True)
+            return dbc.Alert(f"Refresh failed: {msg}", color="danger", dismissable=True)
     
     elif ctx.triggered_id == "refresh-gcs-btn":
         success, msg = refresh_gcs_from_staging()
         if success:
             return dbc.Alert(msg, color="success", dismissable=True)
         else:
-            return dbc.Alert(f"⚠️ Refresh failed: {msg}", color="danger", dismissable=True)
+            return dbc.Alert(f"Refresh failed: {msg}", color="danger", dismissable=True)
     
     return no_update
 
