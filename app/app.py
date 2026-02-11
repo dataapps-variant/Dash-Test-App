@@ -420,9 +420,8 @@ def create_landing_layout(user, theme="dark"):
         dbc.Row([
             dbc.Col(width=9),
             dbc.Col([
-                html.Div([
-                    dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
-                    dbc.DropdownMenu(
+                dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
+                dbc.DropdownMenu(
                     label=":",
                     children=[
                         dbc.DropdownMenuItem("Admin Panel", id="admin-panel-btn") if show_admin else None,
@@ -433,8 +432,7 @@ def create_landing_layout(user, theme="dark"):
                     
                     color="secondary"
                 )
-                ], style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end", "gap": "4px"})
-            ], width=4, style={"textAlign": "right"})
+            ], width=3, style={"textAlign": "right"})
         ], className="mb-3"),
         
         # Logo and welcome
@@ -471,8 +469,9 @@ def create_icarus_historical_layout(user, theme="dark"):
                 )
             ], width=6),
             dbc.Col([
-                dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
-                dbc.DropdownMenu(
+                html.Div([
+                    dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
+                    dbc.DropdownMenu(
                     label=":",
                     children=[
                         dbc.DropdownMenuItem("Export Full Dashboard as PDF", disabled=True),
@@ -482,6 +481,7 @@ def create_icarus_historical_layout(user, theme="dark"):
                     
                     color="secondary"
                 )
+                ], style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end", "gap": "4px"})
             ], width=4, style={"textAlign": "right"})
         ], className="mb-2", align="center"),
         
