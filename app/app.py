@@ -420,8 +420,9 @@ def create_landing_layout(user, theme="dark"):
         dbc.Row([
             dbc.Col(width=9),
             dbc.Col([
-                dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
-                dbc.DropdownMenu(
+                html.Div([
+                    dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
+                    dbc.DropdownMenu(
                     label=":",
                     children=[
                         dbc.DropdownMenuItem("Admin Panel", id="admin-panel-btn") if show_admin else None,
@@ -432,7 +433,8 @@ def create_landing_layout(user, theme="dark"):
                     
                     color="secondary"
                 )
-            ], width=3, style={"textAlign": "right"})
+                ], style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end", "gap": "4px"})
+            ], width=4, style={"textAlign": "right"})
         ], className="mb-3"),
         
         # Logo and welcome
@@ -457,17 +459,17 @@ def create_icarus_historical_layout(user, theme="dark"):
     cache_info = get_cache_info()
     
     return html.Div([
-        # Header - Back + Title left-center, Logout right
+        # Header - Back left, Title center, Logout right
         dbc.Row([
             dbc.Col([
-                html.Div([
-                    dbc.Button("\u2190 Back", id="back-to-landing", color="secondary", size="sm"),
-                    html.Span(
-                        "ICARUS - Plan (Historical)",
-                        style={"color": colors["text_primary"], "fontWeight": "600", "fontSize": "18px", "marginLeft": "16px", "verticalAlign": "middle"}
-                    )
-                ], style={"display": "flex", "alignItems": "center"})
-            ], width=8),
+                dbc.Button("\u2190 Back", id="back-to-landing", color="secondary", size="sm")
+            ], width=2),
+            dbc.Col([
+                html.H5(
+                    "ICARUS - Plan (Historical)",
+                    style={"textAlign": "center", "color": colors["text_primary"], "fontWeight": "600", "margin": "0"}
+                )
+            ], width=6),
             dbc.Col([
                 dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
                 dbc.DropdownMenu(
@@ -635,8 +637,8 @@ def create_filters_layout(plan_groups, min_date, max_date, prefix, theme="dark")
             
             # Row 2: Plan Groups
             html.Div("Plan Groups", className="filter-title"),
-            dbc.Row(plan_checkboxes[:6], className="mb-2"),
-            dbc.Row(plan_checkboxes[6:], className="mb-2") if len(plan_checkboxes) > 6 else None,
+            dbc.Row(plan_checkboxes[:6], className="mb-3"),
+            dbc.Row(plan_checkboxes[6:], className="mb-3") if len(plan_checkboxes) > 6 else None,
             
             html.Hr(),
             
