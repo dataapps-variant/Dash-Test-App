@@ -1571,7 +1571,7 @@ def load_active_tab(active_tab, session_data, theme):
             ], style={"textAlign": "center"}),
             html.Hr(),
             dcc.Loading(html.Div(id="active-pivot-container"), type="dot", color="#FFFFFF"),
-            dcc.Loading(html.Div(id="active-charts-container"), type="dot", color="#FFFFFF")
+            html.Div(id="active-charts-container", style={"display": "none"})
         ])
     except Exception as e:
         return dbc.Alert(f"Error loading data: {str(e)}", color="danger")
@@ -1613,7 +1613,7 @@ def load_inactive_tab(active_tab, session_data, theme):
             ], style={"textAlign": "center"}),
             html.Hr(),
             dcc.Loading(html.Div(id="inactive-pivot-container"), type="dot", color="#FFFFFF"),
-            dcc.Loading(html.Div(id="inactive-charts-container"), type="dot", color="#FFFFFF")
+            html.Div(id="inactive-charts-container", style={"display": "none"})
         ])
     except Exception as e:
         return dbc.Alert(f"Error loading data: {str(e)}", color="danger")
@@ -1769,7 +1769,10 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
         if not pivot_content and not charts_content:
             return dbc.Alert("No data found for the selected filters.", color="warning"), None
         
-        return html.Div(pivot_content), html.Div(charts_content)
+        return dbc.Tabs([
+            dbc.Tab(html.Div(pivot_content, className="mt-3"), label="Pivot Table", tab_id="pivot"),
+            dbc.Tab(html.Div(charts_content, className="mt-3"), label="Charts", tab_id="charts")
+        ], active_tab="pivot", className="mt-3"), None
         
     except Exception as e:
         return dbc.Alert(f"Data loading failed: {str(e)}", color="danger"), None
@@ -1925,7 +1928,10 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
         if not pivot_content and not charts_content:
             return dbc.Alert("No data found for the selected filters.", color="warning"), None
         
-        return html.Div(pivot_content), html.Div(charts_content)
+        return dbc.Tabs([
+            dbc.Tab(html.Div(pivot_content, className="mt-3"), label="Pivot Table", tab_id="pivot"),
+            dbc.Tab(html.Div(charts_content, className="mt-3"), label="Charts", tab_id="charts")
+        ], active_tab="pivot", className="mt-3"), None
         
     except Exception as e:
         return dbc.Alert(f"Data loading failed: {str(e)}", color="danger"), None
