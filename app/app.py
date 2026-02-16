@@ -305,19 +305,21 @@ def create_landing_layout(user, theme="dark"):
         dbc.Row([
             dbc.Col(width=9),
             dbc.Col([
-                dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
-                dbc.DropdownMenu(
-                    label=":",
-                    children=[
-                        dbc.DropdownMenuItem("Admin Panel", id="admin-panel-btn") if show_admin else None,
-                        dbc.DropdownMenuItem(divider=True) if show_admin else None,
-                        dbc.DropdownMenuItem(f"User: {user['name']}", disabled=True) if user else None,
-                        dbc.DropdownMenuItem(f"Role: {role_text}", disabled=True) if user else None,
-                    ],
-                    
-                    color="secondary"
-                )
-            ], width=3, style={"textAlign": "right"})
+                html.Div([
+                    dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
+                    dbc.DropdownMenu(
+                        label=":",
+                        children=[
+                            dbc.DropdownMenuItem("Admin Panel", id="admin-panel-btn") if show_admin else None,
+                            dbc.DropdownMenuItem(divider=True) if show_admin else None,
+                            dbc.DropdownMenuItem(f"User: {user['name']}", disabled=True) if user else None,
+                            dbc.DropdownMenuItem(f"Role: {role_text}", disabled=True) if user else None,
+                        ],
+                        
+                        color="secondary"
+                    )
+                ], style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end"})
+            ], width=3)
         ], className="mb-3"),
         
         # Logo and welcome
@@ -342,30 +344,37 @@ def create_icarus_historical_layout(user, theme="dark"):
     cache_info = get_cache_info()
     
     return html.Div([
-        # Header - Back + Title left-center, Logout right
+        # Header - Back left, Title center, Logout right
         dbc.Row([
             dbc.Col([
-                html.Div([
-                    dbc.Button("\u2190 Back", id="back-to-landing", color="secondary", size="sm"),
-                    html.Span(
-                        "ICARUS - Plan (Historical)",
-                        style={"color": colors["text_primary"], "fontWeight": "600", "fontSize": "18px", "marginLeft": "16px", "verticalAlign": "middle"}
-                    )
-                ], style={"display": "flex", "alignItems": "center"})
-            ], width=8),
+                dbc.Button("\u2190 Back", id="back-to-landing", color="secondary", size="sm")
+            ], width=2),
             dbc.Col([
-                dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
-                dbc.DropdownMenu(
-                    label=":",
-                    children=[
-                        dbc.DropdownMenuItem("Export Full Dashboard as PDF", disabled=True),
-                        dbc.DropdownMenuItem(divider=True),
-                        dbc.DropdownMenuItem(f"User: {user['name']}" if user else "User: --", disabled=True),
-                    ],
-                    
-                    color="secondary"
+                html.Div(
+                    "ICARUS - Plan (Historical)",
+                    style={
+                        "color": colors["text_primary"],
+                        "fontWeight": "600",
+                        "fontSize": "18px",
+                        "textAlign": "center"
+                    }
                 )
-            ], width=4, style={"textAlign": "right"})
+            ], width=6),
+            dbc.Col([
+                html.Div([
+                    dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
+                    dbc.DropdownMenu(
+                        label=":",
+                        children=[
+                            dbc.DropdownMenuItem("Export Full Dashboard as PDF", disabled=True),
+                            dbc.DropdownMenuItem(divider=True),
+                            dbc.DropdownMenuItem(f"User: {user['name']}" if user else "User: --", disabled=True),
+                        ],
+                        
+                        color="secondary"
+                    )
+                ], style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end"})
+            ], width=4)
         ], className="mb-2", align="center"),
         
         # Refresh section - compact inline strip
@@ -750,6 +759,43 @@ app.clientside_callback(
     State({"type": "inactive-plan-collapse", "app": MATCH}, "is_open"),
     State({"type": "inactive-plan-toggle", "app": MATCH}, "children"),
     prevent_initial_call=True
+)
+
+# Clientside callback for dark-themed date pickers
+app.clientside_callback(
+    """
+    function(tab) {
+        setTimeout(function() {
+            var style = document.getElementById('datepicker-dark-override');
+            if (!style) {
+                style = document.createElement('style');
+                style.id = 'datepicker-dark-override';
+                style.textContent = `
+                    .DateInput_input { background: #111111 !important; color: #FFFFFF !important; border: 1px solid #333 !important; font-size: 13px !important; padding: 6px 8px !important; }
+                    .DateInput { background: #111111 !important; }
+                    .SingleDatePickerInput { background: #111111 !important; border: none !important; }
+                    .DateInput_fang { display: none !important; }
+                    .CalendarDay__default { background: #1a1a1a !important; color: #fff !important; border: 1px solid #333 !important; }
+                    .CalendarDay__selected { background: #fff !important; color: #000 !important; }
+                    .CalendarDay__hovered_span, .CalendarDay__selected_span { background: #333 !important; color: #fff !important; }
+                    .CalendarDay__blocked_out_of_range { background: #0a0a0a !important; color: #444 !important; }
+                    .CalendarMonth { background: #111 !important; }
+                    .CalendarMonthGrid { background: #111 !important; }
+                    .DayPicker { background: #111 !important; }
+                    .DayPickerNavigation_button { background: #1a1a1a !important; border: 1px solid #333 !important; }
+                    .DayPickerNavigation_svg__horizontal { fill: #fff !important; }
+                    .CalendarMonth_caption { color: #fff !important; }
+                    .DayPicker_weekHeader_li small { color: #999 !important; }
+                `;
+                document.head.appendChild(style);
+            }
+        }, 100);
+        return window.dash_clientside.no_update;
+    }
+    """,
+    Output('active-tab-content', 'className'),
+    Input('dashboard-tabs', 'active_tab'),
+    prevent_initial_call=False
 )
 
 
@@ -1234,8 +1280,16 @@ def load_active_tab(active_tab, session_data, theme):
                 dbc.Button("Load Data", id="active-load-btn", color="primary", className="mt-3 mb-3")
             ], style={"textAlign": "center"}),
             html.Hr(),
-            dcc.Loading(html.Div(id="active-pivot-container"), type="dot", color="#FFFFFF"),
-            dcc.Loading(html.Div(id="active-charts-container"), type="dot", color="#FFFFFF")
+            dbc.Tabs([
+                dbc.Tab(
+                    dcc.Loading(html.Div(id="active-pivot-container"), type="dot", color="#FFFFFF"),
+                    label="Pivot Table", tab_id="active-pivot-tab"
+                ),
+                dbc.Tab(
+                    dcc.Loading(html.Div(id="active-charts-container"), type="dot", color="#FFFFFF"),
+                    label="Charts", tab_id="active-charts-tab"
+                )
+            ], id="active-sub-tabs", active_tab="active-pivot-tab", className="mb-2")
         ])
     except Exception as e:
         return dbc.Alert(f"Error loading data: {str(e)}", color="danger")
@@ -1276,8 +1330,16 @@ def load_inactive_tab(active_tab, session_data, theme):
                 dbc.Button("Load Data", id="inactive-load-btn", color="primary", className="mt-3 mb-3")
             ], style={"textAlign": "center"}),
             html.Hr(),
-            dcc.Loading(html.Div(id="inactive-pivot-container"), type="dot", color="#FFFFFF"),
-            dcc.Loading(html.Div(id="inactive-charts-container"), type="dot", color="#FFFFFF")
+            dbc.Tabs([
+                dbc.Tab(
+                    dcc.Loading(html.Div(id="inactive-pivot-container"), type="dot", color="#FFFFFF"),
+                    label="Pivot Table", tab_id="inactive-pivot-tab"
+                ),
+                dbc.Tab(
+                    dcc.Loading(html.Div(id="inactive-charts-container"), type="dot", color="#FFFFFF"),
+                    label="Charts", tab_id="inactive-charts-tab"
+                )
+            ], id="inactive-sub-tabs", active_tab="inactive-pivot-tab", className="mb-2")
         ])
     except Exception as e:
         return dbc.Alert(f"Error loading data: {str(e)}", color="danger")
