@@ -41,6 +41,16 @@ from app.bigquery_client import (
 from app.charts import build_line_chart, get_chart_config, create_legend_component
 from app.colors import build_plan_color_map
 
+# Shared components (Phase 1 migration)
+from app.shared.filters import (
+    get_plans_by_app, filter_plan_groups_by_apps, create_filters_layout
+)
+from app.shared.tables import (
+    format_metric_value, get_display_metric_name, process_pivot_data, build_pivot_grid
+)
+from app.shared.charts_builder import build_charts_section, build_pivot_section
+from app.shared.helpers import get_dashboard_name, get_available_apps_for_dashboard
+
 # =============================================================================
 # APP INITIALIZATION
 # =============================================================================
@@ -109,157 +119,32 @@ SESSION_COOKIE = "variant_session_id"
 
 
 # =============================================================================
-# HELPER FUNCTIONS
+# HELPER FUNCTIONS (remaining app-level helpers)
+# Note: Most helpers moved to app.shared modules (Phase 1 migration):
+#   - get_plans_by_app, filter_plan_groups_by_apps → app.shared.filters
+#   - format_metric_value, get_display_metric_name, process_pivot_data → app.shared.tables
+#   - get_dashboard_name, get_available_apps_for_dashboard → app.shared.helpers
 # =============================================================================
+
+# ICARUS filter configuration - defines what filters this dashboard uses
+ICARUS_FILTER_CONFIG = {
+    "show_date_range": True,
+    "show_billing_cycle": True,
+    "show_cohort": True,
+    "show_plan_groups": True,
+    "show_metrics": True,
+    "bc_options": BC_OPTIONS,
+    "default_bc": DEFAULT_BC,
+    "cohort_options": COHORT_OPTIONS,
+    "default_cohort": DEFAULT_COHORT,
+    "default_plan": DEFAULT_PLAN,
+    "metrics_config": METRICS_CONFIG,
+}
+
 
 def get_session_id_from_cookie():
     """Get session ID from cookie"""
     return request.cookies.get(SESSION_COOKIE)
-
-
-def get_plans_by_app(plan_groups):
-    """Group plans by App_Name"""
-    result = {}
-    for app, plan in zip(plan_groups["App_Name"], plan_groups["Plan_Name"]):
-        if app not in result:
-            result[app] = []
-        if plan not in result[app]:
-            result[app].append(plan)
-    return result
-
-
-def filter_plan_groups_by_apps(plan_groups, allowed_apps):
-    """
-    Filter plan_groups dict to only include plans from allowed apps.
-    If allowed_apps is None, return all (no filtering).
-    """
-    if allowed_apps is None:
-        return plan_groups
-    
-    filtered_indices = [
-        i for i in range(len(plan_groups["App_Name"]))
-        if plan_groups["App_Name"][i] in allowed_apps
-    ]
-    
-    return {
-        "App_Name": [plan_groups["App_Name"][i] for i in filtered_indices],
-        "Plan_Name": [plan_groups["Plan_Name"][i] for i in filtered_indices]
-    }
-
-
-def get_available_apps_for_dashboard(dashboard_id):
-    """Get all available App_Names for a dashboard by loading plan groups"""
-    try:
-        active_plans = load_plan_groups("Active")
-        inactive_plans = load_plan_groups("Inactive")
-        
-        all_apps = set(active_plans.get("App_Name", []))
-        all_apps.update(inactive_plans.get("App_Name", []))
-        
-        return sorted(all_apps)
-    except Exception:
-        return []
-
-
-def get_dashboard_name(dashboard_id):
-    """Get dashboard display name from ID"""
-    for d in DASHBOARDS:
-        if d["id"] == dashboard_id:
-            return d["name"]
-    return dashboard_id
-
-
-def format_metric_value(value, metric_name, is_crystal_ball=False):
-    """Format value based on metric type"""
-    if value is None or pd.isna(value):
-        return None
-    
-    config = METRICS_CONFIG.get(metric_name, {})
-    format_type = config.get("format", "number")
-    
-    try:
-        if metric_name == "Rebills" and is_crystal_ball:
-            return round(float(value))
-        
-        if format_type == "percent":
-            return round(float(value) * 100, 2)
-        return round(float(value), 2)
-    except:
-        return None
-
-
-def get_display_metric_name(metric_name):
-    """Get display name with suffix"""
-    config = METRICS_CONFIG.get(metric_name, {})
-    display = config.get("display", metric_name)
-    suffix = config.get("suffix", "")
-    return f"{display}{suffix}"
-
-
-def process_pivot_data(pivot_data, selected_metrics, is_crystal_ball=False):
-    """Process pivot data into DataFrame for AG Grid"""
-    if not pivot_data or "Reporting_Date" not in pivot_data or len(pivot_data["Reporting_Date"]) == 0:
-        return None, []
-    
-    unique_dates = sorted(set(pivot_data["Reporting_Date"]), reverse=True)
-    
-    date_columns = []
-    date_map = {}
-    for d in unique_dates:
-        if hasattr(d, 'strftime'):
-            formatted = d.strftime("%m/%d/%Y")
-        else:
-            formatted = str(d)
-        date_columns.append(formatted)
-        date_map[d] = formatted
-    
-    plan_combos = []
-    seen = set()
-    for i in range(len(pivot_data["App_Name"])):
-        combo = (pivot_data["App_Name"][i], pivot_data["Plan_Name"][i])
-        if combo not in seen:
-            plan_combos.append(combo)
-            seen.add(combo)
-    
-    plan_combos.sort(key=lambda x: (x[0], x[1]))
-    
-    lookup = {}
-    for i in range(len(pivot_data["Reporting_Date"])):
-        app = pivot_data["App_Name"][i]
-        plan = pivot_data["Plan_Name"][i]
-        date = pivot_data["Reporting_Date"][i]
-        
-        key = (app, plan, date)
-        if key not in lookup:
-            lookup[key] = {}
-        
-        for metric in selected_metrics:
-            if metric in pivot_data:
-                lookup[key][metric] = pivot_data[metric][i]
-    
-    rows = []
-    for app_name, plan_name in plan_combos:
-        for metric in selected_metrics:
-            row = {
-                "App": app_name,
-                "Plan": plan_name,
-                "Metric": get_display_metric_name(metric)
-            }
-            
-            for d in unique_dates:
-                formatted_date = date_map[d]
-                key = (app_name, plan_name, d)
-                raw_value = lookup.get(key, {}).get(metric, None)
-                formatted_value = format_metric_value(raw_value, metric, is_crystal_ball)
-                row[formatted_date] = formatted_value
-            
-            rows.append(row)
-    
-    df = pd.DataFrame(rows)
-    column_order = ["App", "Plan", "Metric"] + date_columns
-    df = df[[c for c in column_order if c in df.columns]]
-    
-    return df, date_columns
 
 
 # =============================================================================
@@ -416,24 +301,22 @@ def create_landing_layout(user, theme="dark"):
         role_text = "Read Only"
     
     return html.Div([
-       # Header with menu
+        # Header with menu
         dbc.Row([
             dbc.Col(width=9),
             dbc.Col([
-                html.Div([
-                    dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
-                    dbc.DropdownMenu(
-                        label=":",
-                        children=[
-                            dbc.DropdownMenuItem("Admin Panel", id="admin-panel-btn") if show_admin else None,
-                            dbc.DropdownMenuItem(divider=True) if show_admin else None,
-                            dbc.DropdownMenuItem(f"User: {user['name']}", disabled=True) if user else None,
-                            dbc.DropdownMenuItem(f"Role: {role_text}", disabled=True) if user else None,
-                        ],
-                        
-                        color="secondary"
-                    )
-                ], style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end"})
+                dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
+                dbc.DropdownMenu(
+                    label=":",
+                    children=[
+                        dbc.DropdownMenuItem("Admin Panel", id="admin-panel-btn") if show_admin else None,
+                        dbc.DropdownMenuItem(divider=True) if show_admin else None,
+                        dbc.DropdownMenuItem(f"User: {user['name']}", disabled=True) if user else None,
+                        dbc.DropdownMenuItem(f"Role: {role_text}", disabled=True) if user else None,
+                    ],
+                    
+                    color="secondary"
+                )
             ], width=3, style={"textAlign": "right"})
         ], className="mb-3"),
         
@@ -459,21 +342,20 @@ def create_icarus_historical_layout(user, theme="dark"):
     cache_info = get_cache_info()
     
     return html.Div([
-        # Header - Back left, Title center, Logout right
+        # Header - Back + Title left-center, Logout right
         dbc.Row([
             dbc.Col([
-                dbc.Button("\u2190 Back", id="back-to-landing", color="secondary", size="sm")
-            ], width=2),
-            dbc.Col([
-                html.H5(
-                    "ICARUS - Plan (Historical)",
-                    style={"textAlign": "center", "color": colors["text_primary"], "fontWeight": "600", "margin": "0"}
-                )
-            ], width=6),
-            dbc.Col([
                 html.Div([
-                    dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
-                    dbc.DropdownMenu(
+                    dbc.Button("\u2190 Back", id="back-to-landing", color="secondary", size="sm"),
+                    html.Span(
+                        "ICARUS - Plan (Historical)",
+                        style={"color": colors["text_primary"], "fontWeight": "600", "fontSize": "18px", "marginLeft": "16px", "verticalAlign": "middle"}
+                    )
+                ], style={"display": "flex", "alignItems": "center"})
+            ], width=8),
+            dbc.Col([
+                dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
+                dbc.DropdownMenu(
                     label=":",
                     children=[
                         dbc.DropdownMenuItem("Export Full Dashboard as PDF", disabled=True),
@@ -483,7 +365,6 @@ def create_icarus_historical_layout(user, theme="dark"):
                     
                     color="secondary"
                 )
-                ], style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end", "gap": "4px"})
             ], width=4, style={"textAlign": "right"})
         ], className="mb-2", align="center"),
         
@@ -527,137 +408,7 @@ def create_icarus_historical_layout(user, theme="dark"):
     })
 
 
-def create_filters_layout(plan_groups, min_date, max_date, prefix, theme="dark"):
-    """Create filters section layout"""
-    colors = get_theme_colors(theme)
-    
-    plans_by_app = get_plans_by_app(plan_groups)
-    app_names = sorted(plans_by_app.keys())
-    
-# Plan group checkboxes - show 2 visible, rest collapsed
-    plan_checkboxes = []
-    for app_name in app_names:
-        plans = sorted(plans_by_app.get(app_name, []))
-        visible_plans = plans[:2]
-        hidden_plans = plans[2:]
-        extra_count = len(hidden_plans)
-        
-        visible_options = [{"label": plan, "value": plan} for plan in visible_plans]
-        hidden_options = [{"label": plan, "value": plan} for plan in hidden_plans]
-        
-        default_visible = [DEFAULT_PLAN] if DEFAULT_PLAN in visible_plans else []
-        default_hidden = [DEFAULT_PLAN] if DEFAULT_PLAN in hidden_plans else []
-        
-        plan_checkboxes.append(
-            dbc.Col([
-                html.Div(app_name, className="filter-title"),
-                # First 2 plans - always visible
-                dbc.Checklist(
-                    id={"type": f"{prefix}-plan-checklist", "app": app_name},
-                    options=visible_options,
-                    value=default_visible,
-                ),
-                # Remaining plans in collapse
-                dbc.Collapse(
-                    dbc.Checklist(
-                        id={"type": f"{prefix}-plan-checklist-more", "app": app_name},
-                        options=hidden_options,
-                        value=default_hidden,
-                    ),
-                    id={"type": f"{prefix}-plan-collapse", "app": app_name},
-                    is_open=False
-                ),
-                # Toggle link (hidden if ≤2 plans)
-                html.A(
-                    f"+{extra_count} more",
-                    id={"type": f"{prefix}-plan-toggle", "app": app_name},
-                    n_clicks=0,
-                    style={
-                        "cursor": "pointer",
-                        "color": "#999999",
-                        "fontSize": "12px",
-                        "display": "block",
-                        "marginTop": "4px"
-                    }
-                )
-            ], width=2)
-        )
-    
-    # Metrics checkboxes
-    metrics_options = [{"label": METRICS_CONFIG[m]["display"], "value": m} for m in METRICS_CONFIG.keys()]
-    
-    return dbc.Accordion([
-        dbc.AccordionItem([
-            # Row 1: Date Range, BC, Cohort, Reset
-            dbc.Row([
-                dbc.Col([
-                    html.Div("Date Range", className="filter-title"),
-                    dbc.Row([
-                        dbc.Col([
-                            dcc.DatePickerSingle(
-                                id=f"{prefix}-from-date",
-                                date=min_date,
-                                min_date_allowed=min_date,
-                                max_date_allowed=max_date,
-                                display_format="YYYY-MM-DD"
-                            )
-                        ], width=6),
-                        dbc.Col([
-                            dcc.DatePickerSingle(
-                                id=f"{prefix}-to-date",
-                                date=max_date,
-                                min_date_allowed=min_date,
-                                max_date_allowed=max_date,
-                                display_format="YYYY-MM-DD"
-                            )
-                        ], width=6)
-                    ])
-                ], width=3),
-                dbc.Col([
-                    html.Div("Billing Cycle", className="filter-title"),
-                    dbc.Select(
-                        id=f"{prefix}-bc",
-                        options=[{"label": str(bc), "value": bc} for bc in BC_OPTIONS],
-                        value=DEFAULT_BC
-                    )
-                ], width=2),
-                dbc.Col([
-                    html.Div("Cohort", className="filter-title"),
-                    dbc.Select(
-                        id=f"{prefix}-cohort",
-                        options=[{"label": c, "value": c} for c in COHORT_OPTIONS],
-                        value=DEFAULT_COHORT
-                    )
-                ], width=2),
-                dbc.Col(width=3),
-                dbc.Col([
-                    dbc.Button("Reset", id=f"{prefix}-reset-btn", color="secondary", className="w-100", style={"marginTop": "22px"})
-                ], width=2)
-           ], className="mb-2"),
-            
-            html.Hr(style={"margin": "10px 0"}),
-            
-            # Row 2: Plan Groups
-            html.Div("Plan Groups", className="filter-title"),
-            dbc.Row(plan_checkboxes[:6], className="mb-3"),
-            dbc.Row(plan_checkboxes[6:], className="mb-3") if len(plan_checkboxes) > 6 else None,
-            
-            html.Hr(),
-            
-            # Row 3: Metrics
-            dbc.Row([
-                dbc.Col([
-                    html.Div("Metrics", className="filter-title"),
-                    dbc.Checklist(
-                        id=f"{prefix}-metrics",
-                        options=metrics_options,
-                        value=list(METRICS_CONFIG.keys()),
-                        inline=True
-                    )
-                ])
-            ])
-        ], title="Filters")
-    ], start_collapsed=False)
+# Note: create_filters_layout moved to app.shared.filters (Phase 1 migration)
 
 
 def create_admin_layout(theme="dark"):
@@ -1001,93 +752,6 @@ app.clientside_callback(
     prevent_initial_call=True
 )
 
-# Force dark date picker - injects CSS after react-dates loads
-app.clientside_callback(
-    """
-    function(tab) {
-        var style = document.getElementById('datepicker-dark-override');
-        if (!style) {
-            style = document.createElement('style');
-            style.id = 'datepicker-dark-override';
-            style.textContent = `
-                .dash-datepicker-input,
-.dash-datepicker-input-wrapper,
-.dash-datepicker,
-[class*="dash-datepicker"] {
-    background-color: #111111 !important;
-    color: #FFFFFF !important;
-    border-color: #333333 !important;
-}
-.CalendarMonth_caption select,
-[class*="CalendarMonth_caption"] select {
-    background-color: #111111 !important;
-    color: #FFFFFF !important;
-    border: 1px solid #333333 !important;
-}
-[class*="dash-datepicker"] th {
-    color: #999999 !important;
-    background-color: #111111 !important;
-}
-[class*="dash-datepicker-calendar"] .row,
-[class*="dash-datepicker-calendar"] div {
-    background-color: #111111 !important;
-}
-.dash-dropdown, button.dash-dropdown {
-    background-color: #111111 !important;
-    color: #FFFFFF !important;
-    border-color: #333333 !important;
-}
-.dash-dropdown-option, .dash-options-list-option {
-    color: #FFFFFF !important;
-}
-.dash-options-list-option:hover {
-    background-color: #333333 !important;
-}
-                .DateInput, .DateInput input, [class*="DateInput"] input,
-                .SingleDatePickerInput, [class*="SingleDatePickerInput"] {
-                    background-color: #111111 !important;
-                    color: #FFFFFF !important;
-                    border-color: #333333 !important;
-                }
-                .SingleDatePicker_picker, [class*="SingleDatePicker_picker"] {
-                    background-color: #111111 !important;
-                }
-                .DayPicker, [class*="DayPicker_"], [class*="DayPicker__"],
-                .DayPicker_transitionContainer, .CalendarMonthGrid,
-                .CalendarMonth, [class*="CalendarMonth_"] {
-                    background-color: #111111 !important;
-                }
-                .CalendarDay__default, [class*="CalendarDay__default"] {
-                    background-color: #111111 !important;
-                    color: #FFFFFF !important;
-                    border: 1px solid #222222 !important;
-                }
-                .CalendarDay__default:hover {
-                    background-color: #333333 !important;
-                }
-                .CalendarDay__selected, [class*="CalendarDay__selected"] {
-                    background-color: #FFFFFF !important;
-                    color: #000000 !important;
-                    border: 1px solid #FFFFFF !important;
-                }
-                .CalendarDay__blocked_out_of_range, [class*="CalendarDay__blocked"] {
-                    color: #333333 !important;
-                    background-color: #111111 !important;
-                }
-                .DayPicker_weekHeader small { color: #999999 !important; }
-                .CalendarMonth_caption, .CalendarMonth_caption strong { color: #FFFFFF !important; }
-                [class*="DateInput_fang"], [class*="DayPickerKeyboardShortcuts"] { display: none !important; }
-                [class*="DayPickerNavigation_button"] { background-color: #1A1A1A !important; border: 1px solid #333333 !important; }
-                [class*="DayPickerNavigation_svg"] { fill: #FFFFFF !important; }
-            `;
-            document.head.appendChild(style);
-        }
-        return window.dash_clientside.no_update;
-    }
-    """,
-    Output('dashboard-tabs', 'className'),
-    Input('dashboard-tabs', 'active_tab')
-)
 
 # =============================================================================
 # ADMIN PANEL CALLBACKS
@@ -1565,13 +1229,13 @@ def load_active_tab(active_tab, session_data, theme):
             return dbc.Alert("No active plans found.", color="warning")
         
         return html.Div([
-            create_filters_layout(plan_groups, date_bounds["min_date"], date_bounds["max_date"], "active", theme),
+            create_filters_layout(plan_groups, date_bounds["min_date"], date_bounds["max_date"], "active", ICARUS_FILTER_CONFIG, theme),
             html.Div([
                 dbc.Button("Load Data", id="active-load-btn", color="primary", className="mt-3 mb-3")
             ], style={"textAlign": "center"}),
             html.Hr(),
             dcc.Loading(html.Div(id="active-pivot-container"), type="dot", color="#FFFFFF"),
-            html.Div(id="active-charts-container", style={"display": "none"})
+            dcc.Loading(html.Div(id="active-charts-container"), type="dot", color="#FFFFFF")
         ])
     except Exception as e:
         return dbc.Alert(f"Error loading data: {str(e)}", color="danger")
@@ -1607,13 +1271,13 @@ def load_inactive_tab(active_tab, session_data, theme):
             return dbc.Alert("No inactive plans found.", color="warning")
         
         return html.Div([
-            create_filters_layout(plan_groups, date_bounds["min_date"], date_bounds["max_date"], "inactive", theme),
+            create_filters_layout(plan_groups, date_bounds["min_date"], date_bounds["max_date"], "inactive", ICARUS_FILTER_CONFIG, theme),
             html.Div([
                 dbc.Button("Load Data", id="inactive-load-btn", color="primary", className="mt-3 mb-3")
             ], style={"textAlign": "center"}),
             html.Hr(),
             dcc.Loading(html.Div(id="inactive-pivot-container"), type="dot", color="#FFFFFF"),
-            html.Div(id="inactive-charts-container", style={"display": "none"})
+            dcc.Loading(html.Div(id="inactive-charts-container"), type="dot", color="#FFFFFF")
         ])
     except Exception as e:
         return dbc.Alert(f"Error loading data: {str(e)}", color="danger")
@@ -1634,12 +1298,11 @@ def load_inactive_tab(active_tab, session_data, theme):
     prevent_initial_call=True
 )
 def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_values, plan_more_values, theme):
-    """Load data for Active tab"""
+    """Load data for Active tab - uses shared pivot/chart builders"""
     if not n_clicks:
         return no_update, no_update
     
     theme = theme or "dark"
-    colors = get_theme_colors(theme)
     
     # Flatten selected plans (visible + expanded)
     selected_plans = []
@@ -1662,117 +1325,26 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
     if isinstance(to_date, str):
         to_date = datetime.strptime(to_date.split('T')[0], '%Y-%m-%d').date()
     
-    # Load pivot data
     try:
-        # Load regular data
-        try:
-            pivot_regular = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Regular", "Active")
-            df_regular, date_cols_regular = process_pivot_data(pivot_regular, metrics, False)
-        except Exception as e:
-            pivot_regular = None
-            df_regular = None
-            regular_error = str(e)
-        else:
-            regular_error = None
+        # Build pivot tables using shared builder
+        pivot_content = build_pivot_section(
+            load_pivot_data, process_pivot_data,
+            from_date, to_date, bc, cohort, selected_plans, metrics,
+            "Active", METRICS_CONFIG, theme
+        )
         
-        # Load crystal ball data independently
-        try:
-            pivot_crystal = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Crystal Ball", "Active")
-            df_crystal, date_cols_crystal = process_pivot_data(pivot_crystal, metrics, True)
-        except Exception as e:
-            pivot_crystal = None
-            df_crystal = None
-            crystal_error = str(e)
-        else:
-            crystal_error = None
-        
-        pivot_content = []
-        
-        if regular_error:
-            pivot_content.append(dbc.Alert(f"Data loading failed: {regular_error}", color="danger"))
-        
-        if df_regular is not None and not df_regular.empty:
-            pivot_content.append(html.H5("Plan Overview (Regular)"))
-            pivot_content.append(
-                dag.AgGrid(
-                    rowData=df_regular.to_dict('records'),
-                    columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_regular.columns],
-                    defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
-                    columnSize="autoSize",
-                    columnSizeOptions={"skipHeader": False},
-                    className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
-                    style={"height": "400px"}
-                )
-            )
-        
-        if crystal_error:
-            pivot_content.append(dbc.Alert(f"Data loading failed: {crystal_error}", color="danger"))
-        
-        if df_crystal is not None and not df_crystal.empty:
-            pivot_content.append(html.Br())
-            pivot_content.append(html.H5("Plan Overview (Crystal Ball)"))
-            pivot_content.append(
-                dag.AgGrid(
-                    rowData=df_crystal.to_dict('records'),
-                    columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_crystal.columns],
-                    defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
-                    columnSize="autoSize",
-                    columnSizeOptions={"skipHeader": False},
-                    className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
-                    style={"height": "400px"}
-                )
-            )
-        
-        # Load chart data
+        # Build charts using shared builder
         chart_metric_names = [cm["metric"] for cm in CHART_METRICS]
         all_regular_data = load_all_chart_data(from_date, to_date, int(bc), cohort, selected_plans, chart_metric_names, "Regular", "Active")
         all_crystal_data = load_all_chart_data(from_date, to_date, int(bc), cohort, selected_plans, chart_metric_names, "Crystal Ball", "Active")
         
-        charts_content = []
-        for chart_config in CHART_METRICS:
-            display_name = chart_config["display"]
-            metric = chart_config["metric"]
-            format_type = chart_config["format"]
-            
-            if format_type == "dollar":
-                display_title = f"{display_name} ($)"
-            elif format_type == "percent":
-                display_title = f"{display_name} (%)"
-            else:
-                display_title = display_name
-            
-            chart_data_regular = all_regular_data.get(metric, {"Plan_Name": [], "Reporting_Date": [], "metric_value": []})
-            chart_data_crystal = all_crystal_data.get(metric, {"Plan_Name": [], "Reporting_Date": [], "metric_value": []})
-            
-            fig_regular, plans_regular = build_line_chart(chart_data_regular, display_title, format_type, (from_date, to_date), theme)
-            fig_crystal, plans_crystal = build_line_chart(chart_data_crystal, f"{display_title} (Crystal Ball)", format_type, (from_date, to_date), theme)
-            
-            color_map_regular = build_plan_color_map(plans_regular) if plans_regular else {}
-            color_map_crystal = build_plan_color_map(plans_crystal) if plans_crystal else {}
-            
-            charts_content.append(
-                dbc.Row([
-                    dbc.Col([
-                        html.H6(display_title, style={"color": colors["text_primary"]}),
-                        create_legend_component(plans_regular, color_map_regular, theme) if plans_regular else None,
-                        dcc.Graph(figure=fig_regular, config=get_chart_config(), style={"height": "420px"})
-                    ], width=6),
-                    dbc.Col([
-                        html.H6(f"{display_title} (Crystal Ball)", style={"color": colors["text_primary"]}),
-                        create_legend_component(plans_crystal, color_map_crystal, theme) if plans_crystal else None,
-                        dcc.Graph(figure=fig_crystal, config=get_chart_config(), style={"height": "420px"})
-                    ], width=6)
-                ], className="mb-4")
-            )
+        charts_content = build_charts_section(CHART_METRICS, all_regular_data, all_crystal_data, (from_date, to_date), theme)
         
         # Handle case where both are empty
         if not pivot_content and not charts_content:
             return dbc.Alert("No data found for the selected filters.", color="warning"), None
         
-        return dbc.Tabs([
-            dbc.Tab(html.Div(pivot_content, className="mt-3"), label="Pivot Table", tab_id="pivot"),
-            dbc.Tab(html.Div(charts_content, className="mt-3"), label="Charts", tab_id="charts")
-        ], active_tab="pivot", className="mt-3"), None
+        return html.Div(pivot_content), html.Div(charts_content)
         
     except Exception as e:
         return dbc.Alert(f"Data loading failed: {str(e)}", color="danger"), None
@@ -1793,12 +1365,11 @@ def load_active_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_val
     prevent_initial_call=True
 )
 def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_values, plan_more_values, theme):
-    """Load data for Inactive tab"""
+    """Load data for Inactive tab - uses shared pivot/chart builders"""
     if not n_clicks:
         return no_update, no_update
     
     theme = theme or "dark"
-    colors = get_theme_colors(theme)
     
     # Flatten selected plans (visible + expanded)
     selected_plans = []
@@ -1821,117 +1392,26 @@ def load_inactive_data(n_clicks, from_date, to_date, bc, cohort, metrics, plan_v
     if isinstance(to_date, str):
         to_date = datetime.strptime(to_date.split('T')[0], '%Y-%m-%d').date()
     
-    # Load pivot data
     try:
-        # Load regular data
-        try:
-            pivot_regular = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Regular", "Inactive")
-            df_regular, date_cols_regular = process_pivot_data(pivot_regular, metrics, False)
-        except Exception as e:
-            pivot_regular = None
-            df_regular = None
-            regular_error = str(e)
-        else:
-            regular_error = None
+        # Build pivot tables using shared builder
+        pivot_content = build_pivot_section(
+            load_pivot_data, process_pivot_data,
+            from_date, to_date, bc, cohort, selected_plans, metrics,
+            "Inactive", METRICS_CONFIG, theme
+        )
         
-        # Load crystal ball data independently
-        try:
-            pivot_crystal = load_pivot_data(from_date, to_date, int(bc), cohort, selected_plans, metrics, "Crystal Ball", "Inactive")
-            df_crystal, date_cols_crystal = process_pivot_data(pivot_crystal, metrics, True)
-        except Exception as e:
-            pivot_crystal = None
-            df_crystal = None
-            crystal_error = str(e)
-        else:
-            crystal_error = None
-        
-        pivot_content = []
-        
-        if regular_error:
-            pivot_content.append(dbc.Alert(f"Data loading failed: {regular_error}", color="danger"))
-        
-        if df_regular is not None and not df_regular.empty:
-            pivot_content.append(html.H5("Plan Overview (Regular)"))
-            pivot_content.append(
-                dag.AgGrid(
-                    rowData=df_regular.to_dict('records'),
-                    columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_regular.columns],
-                    defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
-                    columnSize="autoSize",
-                    columnSizeOptions={"skipHeader": False},
-                    className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
-                    style={"height": "400px"}
-                )
-            )
-        
-        if crystal_error:
-            pivot_content.append(dbc.Alert(f"Data loading failed: {crystal_error}", color="danger"))
-        
-        if df_crystal is not None and not df_crystal.empty:
-            pivot_content.append(html.Br())
-            pivot_content.append(html.H5("Plan Overview (Crystal Ball)"))
-            pivot_content.append(
-                dag.AgGrid(
-                    rowData=df_crystal.to_dict('records'),
-                    columnDefs=[{"field": c, "pinned": "left" if c in ["App", "Plan", "Metric"] else None} for c in df_crystal.columns],
-                    defaultColDef={"resizable": True, "sortable": True, "filter": True, "wrapHeaderText": True, "autoHeaderHeight": True},
-                    columnSize="autoSize",
-                    columnSizeOptions={"skipHeader": False},
-                    className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
-                    style={"height": "400px"}
-                )
-            )
-        
-        # Load chart data
+        # Build charts using shared builder
         chart_metric_names = [cm["metric"] for cm in CHART_METRICS]
         all_regular_data = load_all_chart_data(from_date, to_date, int(bc), cohort, selected_plans, chart_metric_names, "Regular", "Inactive")
         all_crystal_data = load_all_chart_data(from_date, to_date, int(bc), cohort, selected_plans, chart_metric_names, "Crystal Ball", "Inactive")
         
-        charts_content = []
-        for chart_config in CHART_METRICS:
-            display_name = chart_config["display"]
-            metric = chart_config["metric"]
-            format_type = chart_config["format"]
-            
-            if format_type == "dollar":
-                display_title = f"{display_name} ($)"
-            elif format_type == "percent":
-                display_title = f"{display_name} (%)"
-            else:
-                display_title = display_name
-            
-            chart_data_regular = all_regular_data.get(metric, {"Plan_Name": [], "Reporting_Date": [], "metric_value": []})
-            chart_data_crystal = all_crystal_data.get(metric, {"Plan_Name": [], "Reporting_Date": [], "metric_value": []})
-            
-            fig_regular, plans_regular = build_line_chart(chart_data_regular, display_title, format_type, (from_date, to_date), theme)
-            fig_crystal, plans_crystal = build_line_chart(chart_data_crystal, f"{display_title} (Crystal Ball)", format_type, (from_date, to_date), theme)
-            
-            color_map_regular = build_plan_color_map(plans_regular) if plans_regular else {}
-            color_map_crystal = build_plan_color_map(plans_crystal) if plans_crystal else {}
-            
-            charts_content.append(
-                dbc.Row([
-                    dbc.Col([
-                        html.H6(display_title, style={"color": colors["text_primary"]}),
-                        create_legend_component(plans_regular, color_map_regular, theme) if plans_regular else None,
-                        dcc.Graph(figure=fig_regular, config=get_chart_config(), style={"height": "420px"})
-                    ], width=6),
-                    dbc.Col([
-                        html.H6(f"{display_title} (Crystal Ball)", style={"color": colors["text_primary"]}),
-                        create_legend_component(plans_crystal, color_map_crystal, theme) if plans_crystal else None,
-                        dcc.Graph(figure=fig_crystal, config=get_chart_config(), style={"height": "420px"})
-                    ], width=6)
-                ], className="mb-4")
-            )
+        charts_content = build_charts_section(CHART_METRICS, all_regular_data, all_crystal_data, (from_date, to_date), theme)
         
         # Handle case where both are empty
         if not pivot_content and not charts_content:
             return dbc.Alert("No data found for the selected filters.", color="warning"), None
         
-        return dbc.Tabs([
-            dbc.Tab(html.Div(pivot_content, className="mt-3"), label="Pivot Table", tab_id="pivot"),
-            dbc.Tab(html.Div(charts_content, className="mt-3"), label="Charts", tab_id="charts")
-        ], active_tab="pivot", className="mt-3"), None
+        return html.Div(pivot_content), html.Div(charts_content)
         
     except Exception as e:
         return dbc.Alert(f"Data loading failed: {str(e)}", color="danger"), None
