@@ -175,6 +175,8 @@ def load_from_bigquery():
             Cohort,
             Active_Inactive,
             `Table`,
+            Single_Sale,
+            T30D_New_Users,
             Subscriptions,
             Rebills,
             Churn_Rate,
