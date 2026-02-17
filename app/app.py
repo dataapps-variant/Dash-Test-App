@@ -872,7 +872,7 @@ def render_page(session_data, current_page, theme):
     
     user = get_current_user(session_id)
     
-    i if current_page == "landing" or current_page == "login":
+    if current_page == "landing" or current_page == "login":
         return create_landing_layout(user, theme), create_admin_layout(theme)
     elif current_page == "icarus_historical":
         return create_icarus_historical_layout(user, theme), create_admin_layout(theme)
