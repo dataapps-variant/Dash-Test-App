@@ -140,8 +140,7 @@ def build_bc_line_chart(data, display_name, format_type="dollar", theme="dark"):
         plot_bgcolor=colors["card_bg"],
         font=dict(family="Inter, sans-serif", size=12, color=colors["text_primary"]),
         xaxis=dict(
-            title="Billing Cycle",
-            titlefont=dict(color=colors["text_secondary"], size=12),
+            title=dict(text="Billing Cycle", font=dict(color=colors["text_secondary"], size=12)),
             gridcolor=colors["border"],
             linecolor=colors["border"],
             tickfont=dict(color=colors["text_secondary"]),
