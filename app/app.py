@@ -40,6 +40,9 @@ from app.bigquery_client import (
 )
 from app.charts import build_line_chart, get_chart_config, create_legend_component
 from app.colors import build_plan_color_map
+# ICARUS Multi dashboard
+from app.dashboards.icarus_multi.layout import create_icarus_multi_layout
+from app.dashboards.icarus_multi import callbacks as multi_callbacks
 
 # =============================================================================
 # APP INITIALIZATION
@@ -869,13 +872,14 @@ def render_page(session_data, current_page, theme):
     
     user = get_current_user(session_id)
     
-    if current_page == "landing" or current_page == "login":
+    i if current_page == "landing" or current_page == "login":
         return create_landing_layout(user, theme), create_admin_layout(theme)
     elif current_page == "icarus_historical":
         return create_icarus_historical_layout(user, theme), create_admin_layout(theme)
+    elif current_page == "icarus_multi":
+        return create_icarus_multi_layout(user, theme), create_admin_layout(theme)
     else:
         return create_landing_layout(user, theme), create_admin_layout(theme)
-
 
 @callback(
     Output('session-store', 'data'),
@@ -942,7 +946,16 @@ def navigate_to_icarus(n_clicks):
     if n_clicks:
         return "icarus_historical"
     return no_update
-
+@callback(
+    Output('page-store', 'data', allow_duplicate=True),
+    Input('nav-btn-icarus_multi', 'n_clicks'),
+    prevent_initial_call=True
+)
+def navigate_to_multi(n_clicks):
+    """Handle navigation to ICARUS Multi dashboard"""
+    if n_clicks:
+        return "icarus_multi"
+    return no_update
 
 # Separate callback for back button (on dashboard page)
 @callback(
@@ -1964,7 +1977,10 @@ def handle_refresh(bq_clicks, gcs_clicks):
     
     return no_update
 
-
+# =============================================================================
+# REGISTER DASHBOARD CALLBACKS
+# =============================================================================
+multi_callbacks.register_callbacks(app)
 # =============================================================================
 # RUN APPLICATION
 # =============================================================================
