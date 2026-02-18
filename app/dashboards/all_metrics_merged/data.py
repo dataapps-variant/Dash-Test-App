@@ -123,8 +123,8 @@ def preload_merged_tables():
             logger.warning(f"  Merged [{key}] load error: {e}")
 
 
-def refresh_merged_bq_to_staging():
-    """Load all 9 tables from BQ and save to GCS staging"""
+def refresh_merged_bq_to_staging(skip_keys=None):
+    """Load tables from BQ and save to GCS staging. Optionally skip certain keys."""
     try:
         from google.cloud import bigquery
         client = bigquery.Client()
@@ -133,15 +133,21 @@ def refresh_merged_bq_to_staging():
         if not bucket:
             return False, "GCS bucket not configured"
 
+        skip_keys = skip_keys or []
+        loaded = []
         for key, config in MERGED_TABLES.items():
+            if key in skip_keys:
+                log_debug(f"Skipping merged [{key}]")
+                continue
             log_debug(f"Refreshing merged [{key}] from BQ...")
             query = f"SELECT * FROM `{config['bq']}`"
             arrow_table = client.query(query).to_arrow()
             save_parquet_to_gcs(bucket, config["staging"], arrow_table)
             log_debug(f"  {key}: {arrow_table.num_rows} rows saved to staging")
+            loaded.append(key)
 
         set_metadata_timestamp(bucket, GCS_MERGED_BQ_REFRESH)
-        return True, "Merged BQ refresh complete. Data saved to staging."
+        return True, f"Merged BQ refresh complete ({len(loaded)} tables). Data saved to staging."
     except Exception as e:
         return False, f"Merged BQ refresh failed: {str(e)}"
 
