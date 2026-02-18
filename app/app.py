@@ -46,7 +46,10 @@ from app.dashboards.icarus_historical import callbacks as historical_callbacks
 # ICARUS Multi dashboard
 from app.dashboards.icarus_multi.layout import create_icarus_multi_layout
 from app.dashboards.icarus_multi import callbacks as multi_callbacks
-
+# All Metrics Merged dashboard
+from app.dashboards.all_metrics_merged.layout import create_merged_layout
+from app.dashboards.all_metrics_merged import callbacks as merged_callbacks
+from app.dashboards.all_metrics_merged.data import preload_merged_tables
 # =============================================================================
 # APP INITIALIZATION
 # =============================================================================
@@ -96,6 +99,11 @@ def preload_data():
         
         inactive_plans = load_plan_groups("Inactive")
         logger.info(f"  Inactive plans loaded: {len(inactive_plans.get('Plan_Name', []))} plans")
+        
+        # Preload All Metrics Merged tables
+        logger.info("Preloading All Metrics Merged tables...")
+        preload_merged_tables()
+        logger.info("  Merged tables preloaded")
         
         # Get cache info
         cache_info = get_cache_info()
@@ -551,6 +559,8 @@ def render_page(session_data, current_page, theme):
         return create_icarus_historical_layout(user, theme), create_admin_layout(theme)
     elif current_page == "icarus_multi":
         return create_icarus_multi_layout(user, theme), create_admin_layout(theme)
+    elif current_page == "all_metrics_merged":
+        return create_merged_layout(user, theme), create_admin_layout(theme)    
     else:
         return create_landing_layout(user, theme), create_admin_layout(theme)
 
@@ -630,6 +640,17 @@ def navigate_to_multi(n_clicks):
         return "icarus_multi"
     return no_update
 
+@callback(
+    Output('page-store', 'data', allow_duplicate=True),
+    Input('nav-btn-all_metrics_merged', 'n_clicks'),
+    prevent_initial_call=True
+)
+def navigate_to_merged(n_clicks):
+    """Handle navigation to All Metrics Merged dashboard"""
+    if n_clicks:
+        return "all_metrics_merged"
+    return no_update
+    
 # Separate callback for back button (on dashboard page)
 @callback(
     Output('page-store', 'data', allow_duplicate=True),
@@ -1116,11 +1137,55 @@ def handle_refresh(bq_clicks, gcs_clicks):
     
     return no_update
 
+@callback(
+    Output('refresh-status', 'children'),
+    Input('refresh-bq-btn', 'n_clicks'),
+    Input('refresh-gcs-btn', 'n_clicks'),
+    prevent_initial_call=True
+)
+def handle_refresh(bq_clicks, gcs_clicks):
+    """Handle data refresh for ALL dashboards"""
+    if not ctx.triggered_id:
+        return no_update
+    
+    if ctx.triggered_id == "refresh-bq-btn":
+        # Refresh ICARUS
+        success1, msg1 = refresh_bq_to_staging()
+        # Refresh Merged tables
+        from app.dashboards.all_metrics_merged.data import refresh_merged_bq_to_staging
+        success2, msg2 = refresh_merged_bq_to_staging()
+        
+        if success1 and success2:
+            return dbc.Alert(f"{msg1} | {msg2}", color="success", dismissable=True)
+        else:
+            errors = []
+            if not success1: errors.append(msg1)
+            if not success2: errors.append(msg2)
+            return dbc.Alert(f"Partial failure: {' | '.join(errors)}", color="warning", dismissable=True)
+    
+    elif ctx.triggered_id == "refresh-gcs-btn":
+        # Refresh ICARUS
+        success1, msg1 = refresh_gcs_from_staging()
+        # Refresh Merged tables
+        from app.dashboards.all_metrics_merged.data import refresh_merged_gcs_from_staging
+        success2, msg2 = refresh_merged_gcs_from_staging()
+        
+        if success1 and success2:
+            return dbc.Alert(f"{msg1} | {msg2}", color="success", dismissable=True)
+        else:
+            errors = []
+            if not success1: errors.append(msg1)
+            if not success2: errors.append(msg2)
+            return dbc.Alert(f"Partial failure: {' | '.join(errors)}", color="warning", dismissable=True)
+    
+    return no_update
+    
 # =============================================================================
 # REGISTER DASHBOARD CALLBACKS
 # =============================================================================
 historical_callbacks.register_callbacks(app)
 multi_callbacks.register_callbacks(app)
+merged_callbacks.register_callbacks(app)
 
 # =============================================================================
 # RUN APPLICATION
