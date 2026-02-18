@@ -152,24 +152,29 @@ def refresh_merged_bq_to_staging(skip_keys=None):
         return False, f"Merged BQ refresh failed: {str(e)}"
 
 
-def refresh_merged_gcs_from_staging():
-    """Copy all 9 tables from staging to active GCS cache, reload into memory"""
+def refresh_merged_gcs_from_staging(skip_keys=None):
+    """Copy tables from staging to active GCS cache, reload into memory"""
     global _merged_cache
     try:
         bucket = get_gcs_bucket()
         if not bucket:
             return False, "GCS bucket not configured"
 
+        skip_keys = skip_keys or []
+        activated = []
         for key, config in MERGED_TABLES.items():
+            if key in skip_keys:
+                continue
             arrow_table = load_parquet_from_gcs(bucket, config["staging"])
             if arrow_table is None:
                 continue
             save_parquet_to_gcs(bucket, config["active"], arrow_table)
             _merged_cache[key] = arrow_table.to_pandas()
             log_debug(f"  Merged [{key}]: {arrow_table.num_rows} rows activated")
+            activated.append(key)
 
         set_metadata_timestamp(bucket, GCS_MERGED_GCS_REFRESH)
-        return True, "Merged GCS refresh complete."
+        return True, f"Merged GCS refresh complete ({len(activated)} tables activated)."
     except Exception as e:
         return False, f"Merged GCS refresh failed: {str(e)}"
 
@@ -212,6 +217,11 @@ def get_plan_names_for_app(app_name, table_key="main_30"):
             return []
     filtered = df[df["App_Name"] == app_name]
     return sorted(filtered[col].dropna().unique().tolist())
+
+
+def get_vpu_plan_names_for_app(app_name):
+    """Get unique Product_Name_Final from VPU.15K_Main_Table for Tab 3 dropdown"""
+    return get_plan_names_for_app(app_name, table_key="vpu_main")
 
 
 def get_date_range():
