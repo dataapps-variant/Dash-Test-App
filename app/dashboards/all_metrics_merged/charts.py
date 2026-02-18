@@ -22,7 +22,7 @@ LINE_OPACITY = 0.7
 # Fixed colors for the 4-metric charts
 METRIC_COLORS = {
     "Gross ARPU": "#3B82F6",   # Blue
-    "Net ARPU": "#60A5FA",     # Light blue
+    "Net ARPU": "#DC6B6B",     # Muted red
     "Recent CAC": "#22C55E",   # Green
     "Net LTV": "#F97316",      # Orange
 }
@@ -221,6 +221,13 @@ def build_stacked_area_chart(data_df, display_name, date_range=None, theme="dark
 
     if data_df is None or data_df.empty:
         return _empty_figure(colors), []
+
+    # Filter out plans with no meaningful data (all zeros/NaN)
+    plan_sums = data_df.groupby("Plan_Name")["value"].sum()
+    active_plans = plan_sums[plan_sums.abs() > 0].index.tolist()
+    if not active_plans:
+        return _empty_figure(colors), []
+    data_df = data_df[data_df["Plan_Name"].isin(active_plans)]
 
     unique_plans = sorted(data_df["Plan_Name"].unique())
     color_map = build_plan_color_map(unique_plans)
