@@ -22,7 +22,7 @@ LINE_OPACITY = 0.7
 # Fixed colors for the 4-metric charts
 METRIC_COLORS = {
     "Gross ARPU": "#3B82F6",   # Blue
-    "Net ARPU": "#1E3A5F",     # Dark blue
+    "Net ARPU": "#60A5FA",     # Light blue
     "Recent CAC": "#22C55E",   # Green
     "Net LTV": "#F97316",      # Orange
 }
@@ -116,6 +116,13 @@ def build_plan_line_chart(data_df, display_name, format_type="dollar", date_rang
     if data_df is None or data_df.empty:
         return _empty_figure(colors), []
 
+    # Filter out plans with no meaningful data (all zeros/NaN) in date range
+    plan_sums = data_df.groupby("Plan_Name")["value"].sum()
+    active_plans = plan_sums[plan_sums.abs() > 0].index.tolist()
+    if not active_plans:
+        return _empty_figure(colors), []
+    data_df = data_df[data_df["Plan_Name"].isin(active_plans)]
+
     unique_plans = sorted(data_df["Plan_Name"].unique())
     color_map = build_plan_color_map(unique_plans)
 
@@ -140,7 +147,7 @@ def build_plan_line_chart(data_df, display_name, format_type="dollar", date_rang
 
 def build_metric_line_chart(metrics_dict, display_name, date_range=None, theme="dark"):
     """
-    Build line chart with one line per metric.
+    Build line chart with one line per metric. Net LTV on secondary Y axis.
 
     Args:
         metrics_dict: {metric_display_name: DataFrame(Report_date, value)}
@@ -165,15 +172,30 @@ def build_metric_line_chart(metrics_dict, display_name, date_range=None, theme="
         df = df.sort_values("Report_date")
         color = METRIC_COLORS.get(metric_name, "#6B7280")
 
+        # Net LTV goes on secondary Y axis
+        use_secondary = (metric_name == "Net LTV")
+
         fig.add_trace(go.Scatter(
             x=df["Report_date"], y=df["value"],
             mode="lines", name=metric_name,
             line=dict(color=hex_to_rgba(color, LINE_OPACITY), width=LINE_WIDTH, shape="linear"),
             hovertemplate=f'{metric_name}  $%{{y:,.2f}}<extra></extra>',
             showlegend=False, connectgaps=False,
+            yaxis="y2" if use_secondary else "y",
         ))
 
     layout = _base_layout(colors, "dollar", date_range)
+    # Add secondary Y axis for Net LTV
+    layout["yaxis2"] = dict(
+        gridcolor="rgba(0,0,0,0)",  # hide secondary grid
+        linecolor=colors["border"],
+        tickfont=dict(color=METRIC_COLORS.get("Net LTV", "#F97316")),
+        tickprefix="$", tickformat=",.0f",
+        fixedrange=False,
+        overlaying="y", side="right",
+        title=dict(text="Net LTV", font=dict(color=METRIC_COLORS.get("Net LTV", "#F97316"), size=11)),
+    )
+    layout["margin"]["r"] = 70  # make room for right axis
     fig.update_layout(**layout)
     return fig, metric_names
 
@@ -215,14 +237,15 @@ def build_stacked_area_chart(data_df, display_name, date_range=None, theme="dark
             fillcolor=hex_to_rgba(color, 0.6),
             stackgroup="one",  # enables stacking
             groupnorm="percent",  # normalise to 100%
-            hovertemplate=f'{plan}  %{{y:.1%}}<extra></extra>',
+            hovertemplate=f'{plan}  %{{y:.1f}}%<extra></extra>',
             showlegend=False, connectgaps=False,
         ))
 
-    layout = _base_layout(colors, "percent", date_range)
-    # Override y-axis for percentage
-    layout["yaxis"]["tickformat"] = ".0%"
+    layout = _base_layout(colors, "number", date_range)
+    # Override y-axis for percentage (groupnorm makes y 0-100)
+    layout["yaxis"]["tickformat"] = ".0f"
+    layout["yaxis"]["ticksuffix"] = "%"
     layout["yaxis"]["tickprefix"] = ""
-    layout["yaxis"]["range"] = [0, 1]
+    layout["yaxis"]["range"] = [0, 100]
     fig.update_layout(**layout)
     return fig, unique_plans
