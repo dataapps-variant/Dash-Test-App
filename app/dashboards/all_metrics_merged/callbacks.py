@@ -23,6 +23,7 @@ from app.dashboards.all_metrics_merged.charts import (
 )
 from app.dashboards.all_metrics_merged.data import (
     get_plan_names_for_app,
+    get_vpu_plan_names_for_app,
     get_plan_details,
     get_spend_by_plan,
     get_users_by_plan,
@@ -62,19 +63,23 @@ def register_callbacks(app):
         return bc_style, plan_style
 
     # =================================================================
-    # PLAN NAME DROPDOWN — populate based on App Name
+    # PLAN NAME DROPDOWN — populate based on App Name AND active tab
     # =================================================================
 
     @callback(
         Output("merged-plan-name", "options"),
         Output("merged-plan-name", "value"),
         Input("merged-app-name", "value"),
-        prevent_initial_call=True
+        Input("merged-dashboard-tabs", "active_tab"),
     )
-    def update_plan_dropdown(app_name):
+    def update_plan_dropdown(app_name, active_tab):
         if not app_name:
             return [], None
-        plans = get_plan_names_for_app(app_name)
+        # Tab 3 uses VPU (non-merged) plan names
+        if active_tab == "merged-breakup":
+            plans = get_vpu_plan_names_for_app(app_name)
+        else:
+            plans = get_plan_names_for_app(app_name)
         options = [{"label": p, "value": p} for p in plans]
         default = plans[0] if plans else None
         return options, default
@@ -137,10 +142,9 @@ def register_callbacks(app):
                 columnDefs=col_defs,
                 defaultColDef={"flex": 1, "minWidth": 100},
                 dashGridOptions={
-                    "domLayout": "autoHeight",
                     "animateRows": True,
                 },
-                style={"height": None, "width": "100%"},
+                style={"height": "230px", "width": "100%"},
                 className="ag-theme-alpine-dark" if theme == "dark" else "ag-theme-alpine",
             )
             children.append(
