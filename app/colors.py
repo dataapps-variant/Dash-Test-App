@@ -85,15 +85,15 @@ def get_plan_color(plan_name, plan_index_in_app=0):
     # Generate shade based on index
     shade_pattern = [
         0,      # Base color
-        0.15,   # Lighter 15%
-        -0.15,  # Darker 15%
-        0.30,   # Lighter 30%
-        -0.30,  # Darker 30%
-        0.45,   # Lighter 45%
-        -0.45,  # Darker 45%
-        0.20,   # Lighter 20%
-        -0.20,  # Darker 20%
         0.35,   # Lighter 35%
+        -0.30,  # Darker 30%
+        0.55,   # Lighter 55%
+        -0.50,  # Darker 50%
+        0.20,   # Lighter 20%
+        -0.15,  # Darker 15%
+        0.45,   # Lighter 45%
+        -0.40,  # Darker 40%
+        0.65,   # Lighter 65%
     ]
     
     shade_index = plan_index_in_app % len(shade_pattern)
