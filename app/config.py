@@ -51,13 +51,10 @@ DASHBOARDS = [
     {"id": "icarus_historical", "name": "ICARUS - Plan (Historical)", "icon": "📊", "enabled": True},
     {"id": "icarus_multi", "name": "ICARUS - Multi", "icon": "📈", "enabled": True},
     {"id": "vol_val_plan", "name": "Vol/Val Plan Level", "icon": "📉", "enabled": False},
-    {"id": "pd_metrics", "name": "PD Metrics_Merged", "icon": "📋", "enabled": False},
-    {"id": "dt_metrics", "name": "DT Metrics_Merged", "icon": "📑", "enabled": False},
     {"id": "icarus_cohort", "name": "ICARUS - Cohort", "icon": "👥", "enabled": False},
-    {"id": "jf_metrics", "name": "JF_Metrics_Merged", "icon": "📊", "enabled": False},
     {"id": "cwc", "name": "CWC", "icon": "🔄", "enabled": False},
     {"id": "vol_val_entity", "name": "Vol/Val Entity Level", "icon": "🏢", "enabled": False},
-    {"id": "ct_metrics", "name": "CT Metrics_Merged", "icon": "📈", "enabled": False},
+    {"id": "all_metrics_merged", "name": "All Metrics Merged", "icon": "📊", "enabled": True},
 ]
 
 # =============================================================================
