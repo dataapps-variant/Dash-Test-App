@@ -72,7 +72,7 @@ def build_bc_line_chart(data, display_name, format_type="dollar", theme="dark"):
     fig = go.Figure()
     
     LINE_OPACITY = 0.7
-    LINE_WIDTH = 1
+    LINE_WIDTH = 1.6
     
     for plan in unique_plans:
         if plan in plan_data:
@@ -84,26 +84,20 @@ def build_bc_line_chart(data, display_name, format_type="dollar", theme="dark"):
             base_color = color_map.get(plan, "#6B7280")
             line_color = hex_to_rgba(base_color, LINE_OPACITY)
             
-            # Hover template with BC
+            # Hover template matching Historical style
             if format_type == "dollar":
                 hover_template = (
-                    f'<b>{plan}</b><br>'
-                    f'BC: %{{x}}<br>'
-                    f'Value: $%{{y:,.2f}}'
+                    f'{plan}  $%{{y:,.2f}}'
                     f'<extra></extra>'
                 )
             elif format_type == "percent":
                 hover_template = (
-                    f'<b>{plan}</b><br>'
-                    f'BC: %{{x}}<br>'
-                    f'Value: %{{y:.2%}}'
+                    f'{plan}  %{{y:.2%}}'
                     f'<extra></extra>'
                 )
             else:
                 hover_template = (
-                    f'<b>{plan}</b><br>'
-                    f'BC: %{{x}}<br>'
-                    f'Value: %{{y:,.0f}}'
+                    f'{plan}  %{{y:,.0f}}'
                     f'<extra></extra>'
                 )
             
