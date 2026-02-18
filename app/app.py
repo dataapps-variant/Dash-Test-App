@@ -1117,33 +1117,6 @@ def execute_delete_user(n_clicks, mode_data, refresh_count):
     prevent_initial_call=True
 )
 def handle_refresh(bq_clicks, gcs_clicks):
-    """Handle data refresh"""
-    if not ctx.triggered_id:
-        return no_update
-    
-    if ctx.triggered_id == "refresh-bq-btn":
-        success, msg = refresh_bq_to_staging()
-        if success:
-            return dbc.Alert(msg, color="success", dismissable=True)
-        else:
-            return dbc.Alert(f"Refresh failed: {msg}", color="danger", dismissable=True)
-    
-    elif ctx.triggered_id == "refresh-gcs-btn":
-        success, msg = refresh_gcs_from_staging()
-        if success:
-            return dbc.Alert(msg, color="success", dismissable=True)
-        else:
-            return dbc.Alert(f"Refresh failed: {msg}", color="danger", dismissable=True)
-    
-    return no_update
-
-@callback(
-    Output('refresh-status', 'children'),
-    Input('refresh-bq-btn', 'n_clicks'),
-    Input('refresh-gcs-btn', 'n_clicks'),
-    prevent_initial_call=True
-)
-def handle_refresh(bq_clicks, gcs_clicks):
     """Handle data refresh for ALL dashboards"""
     if not ctx.triggered_id:
         return no_update
