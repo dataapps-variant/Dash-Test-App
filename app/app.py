@@ -1190,7 +1190,7 @@ def handle_landing_bq_refresh(all_clicks):
         success, msg = refresh_bq_to_staging()
     elif dash_id == "all_metrics_merged":
         from app.dashboards.all_metrics_merged.data import refresh_merged_bq_to_staging
-        success, msg = refresh_merged_bq_to_staging(skip_keys=["spend"])
+        success, msg = refresh_merged_bq_to_staging()
     else:
         return dbc.Alert("No refresh available for this dashboard.", color="warning", dismissable=True), no_update
     
@@ -1238,7 +1238,7 @@ def handle_landing_gcs_refresh(all_clicks):
         success, msg = refresh_gcs_from_staging()
     elif dash_id == "all_metrics_merged":
         from app.dashboards.all_metrics_merged.data import refresh_merged_gcs_from_staging
-        success, msg = refresh_merged_gcs_from_staging(skip_keys=["spend"])
+        success, msg = refresh_merged_gcs_from_staging()
     else:
         return dbc.Alert("No refresh available for this dashboard.", color="warning", dismissable=True), no_update
     
@@ -1305,27 +1305,7 @@ def handle_refresh(bq_clicks, gcs_clicks):
     
     return no_update
 
-@callback(
-    Output('refresh-status', 'children', allow_duplicate=True),
-    Input('refresh-merged-no-spend-btn', 'n_clicks'),
-    prevent_initial_call=True
-)
-def handle_merged_no_spend_refresh(n_clicks):
-    """Refresh only merged tables (excluding spend) then activate"""
-    if not n_clicks:
-        return no_update
-    
-    from app.dashboards.all_metrics_merged.data import refresh_merged_bq_to_staging, refresh_merged_gcs_from_staging
-    
-    success1, msg1 = refresh_merged_bq_to_staging(skip_keys=["spend"])
-    if not success1:
-        return dbc.Alert(f"BQ failed: {msg1}", color="danger", dismissable=True)
-    
-    success2, msg2 = refresh_merged_gcs_from_staging(skip_keys=["spend"])
-    if not success2:
-        return dbc.Alert(f"GCS failed: {msg2}", color="danger", dismissable=True)
-    
-    return dbc.Alert(f"{msg1} | {msg2}", color="success", dismissable=True)
+
 # =============================================================================
 # REGISTER DASHBOARD CALLBACKS
 # =============================================================================
