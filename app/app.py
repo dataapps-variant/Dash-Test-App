@@ -49,7 +49,7 @@ from app.dashboards.icarus_multi import callbacks as multi_callbacks
 # All Metrics Merged dashboard
 from app.dashboards.all_metrics_merged.layout import create_merged_layout
 from app.dashboards.all_metrics_merged import callbacks as merged_callbacks
-from app.dashboards.all_metrics_merged.data import preload_merged_tables
+from app.dashboards.all_metrics_merged.data import preload_merged_tables, get_merged_cache_info
 # =============================================================================
 # APP INITIALIZATION
 # =============================================================================
@@ -243,14 +243,16 @@ def create_landing_layout(user, theme="dark"):
     # Check if user can access admin panel (admin or super_admin)
     user_role = user.get("role", "readonly") if user else "readonly"
     show_admin = user_role in ("admin", "super_admin")
-    
+    # Get merged cache info for All Metrics Merged timestamps
+    merged_cache_info = get_merged_cache_info()
+
     # Build clickable dashboard table rows
     table_header = html.Thead(
         html.Tr([
-            html.Th("Dashboard", style={"width": "40%"}),
-            html.Th("Status", style={"width": "15%"}),
-            html.Th("Last BQ Refresh", style={"width": "22%"}),
-            html.Th("Last GCS Refresh", style={"width": "23%"})
+            html.Th("Dashboard", style={"width": "35%"}),
+            html.Th("Status", style={"width": "10%"}),
+            html.Th("Last BQ Refresh", style={"width": "27%"}),
+            html.Th("Last GCS Refresh", style={"width": "28%"})
         ])
     )
     
@@ -258,11 +260,24 @@ def create_landing_layout(user, theme="dark"):
     for dashboard in DASHBOARDS:
         is_enabled = dashboard.get("enabled", False)
         status = "Active" if is_enabled else "Disabled"
-        bq_display = cache_info.get("last_bq_refresh", "--") if is_enabled else "--"
-        gcs_display = cache_info.get("last_gcs_refresh", "--") if is_enabled else "--"
+        
+        # Pick the correct timestamp based on which base tables the dashboard uses
+        dash_id = dashboard["id"]
+        if dash_id in ("icarus_historical", "icarus_multi"):
+            bq_display = cache_info.get("last_bq_refresh", "--")
+            gcs_display = cache_info.get("last_gcs_refresh", "--")
+        elif dash_id == "all_metrics_merged":
+            bq_display = merged_cache_info.get("last_bq_refresh", "--")
+            gcs_display = merged_cache_info.get("last_gcs_refresh", "--")
+        else:
+            bq_display = "--"
+            gcs_display = "--"
+        
+        if not is_enabled:
+            bq_display = "--"
+            gcs_display = "--"
         
         if is_enabled:
-            # Clickable row — dashboard name is a styled button
             name_cell = html.Td(
                 html.A(
                     dashboard['name'],
@@ -280,19 +295,52 @@ def create_landing_layout(user, theme="dark"):
             )
             row_style = {"cursor": "pointer"}
         else:
-            # Disabled row — grayed out
             name_cell = html.Td(
                 f"  {dashboard['name']}",
                 style={"color": "#555555"}
             )
             row_style = {"opacity": "0.5"}
         
+        # BQ cell: button + timestamp
+        bq_cell = html.Td([
+            dbc.Button(
+                "Refresh BQ",
+                id={"type": "landing-refresh-bq", "index": dash_id},
+                size="sm",
+                className="refresh-btn-green me-2",
+                disabled=not is_enabled,
+                style={"fontSize": "11px", "padding": "2px 10px"}
+            ),
+            html.Span(
+                bq_display,
+                id={"type": "landing-bq-timestamp", "index": dash_id},
+                style={"color": colors["text_secondary"], "fontSize": "13px"}
+            )
+        ])
+        
+        # GCS cell: button + timestamp
+        gcs_cell = html.Td([
+            dbc.Button(
+                "Refresh GCS",
+                id={"type": "landing-refresh-gcs", "index": dash_id},
+                size="sm",
+                className="refresh-btn-green me-2",
+                disabled=not is_enabled,
+                style={"fontSize": "11px", "padding": "2px 10px"}
+            ),
+            html.Span(
+                gcs_display,
+                id={"type": "landing-gcs-timestamp", "index": dash_id},
+                style={"color": colors["text_secondary"], "fontSize": "13px"}
+            )
+        ])
+        
         table_rows.append(
             html.Tr([
                 name_cell,
                 html.Td(status, style={"color": "#555555"} if not is_enabled else {}),
-                html.Td(bq_display, style={"color": "#555555"} if not is_enabled else {}),
-                html.Td(gcs_display, style={"color": "#555555"} if not is_enabled else {})
+                bq_cell,
+                gcs_cell
             ], style=row_style)
         )
     
@@ -333,10 +381,13 @@ def create_landing_layout(user, theme="dark"):
         
         # Unified clickable dashboard table
         html.H4("Available Dashboards", className="mb-3"),
-        dbc.Table(
+dbc.Table(
             [table_header, table_body],
             striped=True, bordered=True, hover=True, className="mb-4"
-        )
+        ),
+        
+        # Refresh status area
+        html.Div(id="landing-refresh-status")
     ], style={
         "minHeight": "100vh",
         "backgroundColor": colors["background"],
@@ -1113,7 +1164,104 @@ def execute_delete_user(n_clicks, mode_data, refresh_count):
 # =============================================================================
 # SHARED CALLBACKS (used by both dashboards)
 # =============================================================================
+# =============================================================================
+# LANDING PAGE REFRESH CALLBACKS
+# =============================================================================
 
+@callback(
+    Output("landing-refresh-status", "children"),
+    Output({"type": "landing-bq-timestamp", "index": ALL}, "children"),
+    Input({"type": "landing-refresh-bq", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True
+)
+def handle_landing_bq_refresh(all_clicks):
+    """Handle per-dashboard BQ refresh from landing page"""
+    if not any(c for c in all_clicks if c):
+        return no_update, no_update
+    
+    triggered = ctx.triggered_id
+    if not isinstance(triggered, dict):
+        return no_update, no_update
+    
+    dash_id = triggered.get("index", "")
+    
+    # Determine which refresh function to call
+    if dash_id in ("icarus_historical", "icarus_multi"):
+        success, msg = refresh_bq_to_staging()
+    elif dash_id == "all_metrics_merged":
+        from app.dashboards.all_metrics_merged.data import refresh_merged_bq_to_staging
+        success, msg = refresh_merged_bq_to_staging(skip_keys=["spend"])
+    else:
+        return dbc.Alert("No refresh available for this dashboard.", color="warning", dismissable=True), no_update
+    
+    # Build updated timestamps for ALL dashboard rows
+    if success:
+        # Re-fetch timestamps
+        new_cache_info = get_cache_info()
+        new_merged_info = get_merged_cache_info()
+        
+        # Build timestamp list in same order as DASHBOARDS
+        new_timestamps = []
+        for d in DASHBOARDS:
+            did = d["id"]
+            if did in ("icarus_historical", "icarus_multi"):
+                new_timestamps.append(new_cache_info.get("last_bq_refresh", "--"))
+            elif did == "all_metrics_merged":
+                new_timestamps.append(new_merged_info.get("last_bq_refresh", "--"))
+            else:
+                new_timestamps.append("--")
+        
+        return dbc.Alert(msg, color="success", dismissable=True), new_timestamps
+    else:
+        return dbc.Alert(msg, color="danger", dismissable=True), no_update
+
+
+@callback(
+    Output("landing-refresh-status", "children", allow_duplicate=True),
+    Output({"type": "landing-gcs-timestamp", "index": ALL}, "children"),
+    Input({"type": "landing-refresh-gcs", "index": ALL}, "n_clicks"),
+    prevent_initial_call=True
+)
+def handle_landing_gcs_refresh(all_clicks):
+    """Handle per-dashboard GCS refresh from landing page"""
+    if not any(c for c in all_clicks if c):
+        return no_update, no_update
+    
+    triggered = ctx.triggered_id
+    if not isinstance(triggered, dict):
+        return no_update, no_update
+    
+    dash_id = triggered.get("index", "")
+    
+    # Determine which refresh function to call
+    if dash_id in ("icarus_historical", "icarus_multi"):
+        success, msg = refresh_gcs_from_staging()
+    elif dash_id == "all_metrics_merged":
+        from app.dashboards.all_metrics_merged.data import refresh_merged_gcs_from_staging
+        success, msg = refresh_merged_gcs_from_staging(skip_keys=["spend"])
+    else:
+        return dbc.Alert("No refresh available for this dashboard.", color="warning", dismissable=True), no_update
+    
+    # Build updated timestamps for ALL dashboard rows
+    if success:
+        # Re-fetch timestamps
+        new_cache_info = get_cache_info()
+        new_merged_info = get_merged_cache_info()
+        
+        # Build timestamp list in same order as DASHBOARDS
+        new_timestamps = []
+        for d in DASHBOARDS:
+            did = d["id"]
+            if did in ("icarus_historical", "icarus_multi"):
+                new_timestamps.append(new_cache_info.get("last_gcs_refresh", "--"))
+            elif did == "all_metrics_merged":
+                new_timestamps.append(new_merged_info.get("last_gcs_refresh", "--"))
+            else:
+                new_timestamps.append("--")
+        
+        return dbc.Alert(msg, color="success", dismissable=True), new_timestamps
+    else:
+        return dbc.Alert(msg, color="danger", dismissable=True), no_update
 @callback(
     Output('refresh-status', 'children'),
     Input('refresh-bq-btn', 'n_clicks'),
