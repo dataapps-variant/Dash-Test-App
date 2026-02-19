@@ -11,8 +11,8 @@ from dash import html, dcc
 import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 
-from app.theme import get_theme_colors, get_header_component
-from app.dashboards.all_metrics_merged.data import get_app_names, get_date_range
+from app.theme import get_theme_colors
+from app.dashboards.all_metrics_merged.data import get_app_names, get_date_range, get_merged_cache_info
 
 
 def create_merged_layout(user, theme="dark"):
@@ -29,34 +29,44 @@ def create_merged_layout(user, theme="dark"):
     app_names = get_app_names()
     default_app = app_names[0] if app_names else "CT-JP"
 
-    user_role = user.get("role", "readonly") if user else "readonly"
-    show_admin = user_role in ("admin", "super_admin")
+merged_cache_info = get_merged_cache_info()
 
     return html.Div([
-        # Header row
+        # Header - Back left, Title center, Logout right
         dbc.Row([
             dbc.Col([
-                dbc.Button("← Back", id="back-to-landing", color="secondary", size="sm", className="me-2"),
+                dbc.Button("\u2190 Back", id="back-to-landing", color="secondary", size="sm")
             ], width=2),
             dbc.Col([
-                get_header_component(theme, "small", False, False, ""),
-            ], width=8, style={"textAlign": "center"}),
+                html.H5(
+                    "All Metrics Merged",
+                    style={"textAlign": "center", "color": colors["text_primary"], "fontWeight": "600", "margin": "0"}
+                )
+            ], width=6),
             dbc.Col([
                 html.Div([
                     dbc.Button("Logout", id="logout-btn", color="secondary", size="sm", className="me-2"),
                     dbc.DropdownMenu(
                         label=":",
                         children=[
-                            dbc.DropdownMenuItem("Admin Panel", id="admin-panel-btn") if show_admin else None,
+                            dbc.DropdownMenuItem("Export Full Dashboard as PDF", disabled=True),
+                            dbc.DropdownMenuItem(divider=True),
+                            dbc.DropdownMenuItem(f"User: {user['name']}" if user else "User: --", disabled=True),
                         ],
                         color="secondary"
                     )
-                ], style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end"})
-            ], width=2, style={"textAlign": "right"})
-        ], className="mb-3"),
+                ], style={"display": "flex", "alignItems": "center", "justifyContent": "flex-end", "gap": "4px"})
+            ], width=4, style={"textAlign": "right"})
+        ], className="mb-2", align="center"),
 
-        # Dashboard title
-        html.H4("All Metrics Merged", style={"color": colors["text_primary"], "marginBottom": "16px"}),
+        # Refresh section - compact inline strip
+        html.Div([
+            dbc.Button("Refresh BQ", id="refresh-bq-btn", size="sm", className="refresh-btn-green"),
+            html.Small(f"  Last: {merged_cache_info.get('last_bq_refresh', '--')}  ", style={"color": colors["text_secondary"], "margin": "0 16px 0 8px"}),
+            dbc.Button("Refresh GCS", id="refresh-gcs-btn", size="sm", className="refresh-btn-green"),
+            html.Small(f"  Last: {merged_cache_info.get('last_gcs_refresh', '--')}", style={"color": colors["text_secondary"], "marginLeft": "8px"}),
+            html.Div(id="refresh-status", style={"display": "inline-block", "marginLeft": "16px"})
+        ], style={"textAlign": "right", "padding": "6px 0", "marginBottom": "8px"}),
 
         # =====================================================================
         # SHARED FILTERS — Start Date, End Date, App Name
@@ -152,17 +162,6 @@ def create_merged_layout(user, theme="dark"):
             dbc.Spinner(color="primary", size="lg")
         ]),
 
-        # Refresh section
-        html.Hr(),
-        dbc.Row([
-            dbc.Col([
-dbc.Button("Refresh BQ", id="refresh-bq-btn", color="warning", size="sm", className="me-2"),
-                dbc.Button("Refresh GCS", id="refresh-gcs-btn", color="info", size="sm"),
-            ], width=6),
-            dbc.Col([
-                html.Div(id="refresh-status")
-            ], width=6)
-        ]),
 
     ], style={
         "minHeight": "100vh",
