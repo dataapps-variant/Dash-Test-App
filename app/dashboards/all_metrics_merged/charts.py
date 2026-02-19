@@ -16,20 +16,42 @@ import plotly.graph_objects as go
 from app.theme import get_theme_colors
 # Distinct palette for merged dashboard (visible on dark background)
 _MERGED_PALETTE = [
-    "#E74C3C", "#3B82F6", "#22C55E", "#F59E0B", "#A855F7",
-    "#EC4899", "#06B6D4", "#F97316", "#8B5CF6", "#14B8A6",
-    "#EF4444", "#6366F1", "#84CC16", "#D946EF", "#0EA5E9",
-    "#FB923C", "#34D399", "#F472B6", "#38BDF8", "#FBBF24",
+    # 15 fully distinct colors
+    "#E74C3C",  # Red
+    "#3B82F6",  # Blue
+    "#22C55E",  # Green
+    "#F59E0B",  # Amber
+    "#A855F7",  # Purple
+    "#EC4899",  # Pink
+    "#06B6D4",  # Cyan
+    "#F97316",  # Orange
+    "#FACC15",  # Yellow
+    "#14B8A6",  # Teal
+    "#E879F9",  # Magenta
+    "#FB923C",  # Peach
+    "#38BDF8",  # Sky blue
+    "#4ADE80",  # Lime
+    "#F9A8D4",  # Rose
+    # 12 supporting shades
+    "#B91C1C",  # Dark red
+    "#1D4ED8",  # Dark blue
+    "#15803D",  # Dark green
+    "#A16207",  # Dark amber
+    "#7C3AED",  # Dark purple
+    "#BE185D",  # Dark pink
+    "#0E7490",  # Dark cyan
+    "#C2410C",  # Dark orange
+    "#CA8A04",  # Dark yellow
+    "#0F766E",  # Dark teal
+    "#86198F",  # Dark magenta
+    "#9A3412",  # Dark peach
 ]
 
 def build_merged_color_map(plan_names):
-    """Assign visually distinct colors to plans, deterministic by plan name hash"""
+    """Assign visually distinct colors to plans, deterministic by plan name only"""
     color_map = {}
-    for plan in sorted(plan_names):
+    for plan in plan_names:
         idx = hash(plan) % len(_MERGED_PALETTE)
-        # Handle collisions by shifting
-        while _MERGED_PALETTE[idx] in color_map.values() and len(color_map) < len(_MERGED_PALETTE):
-            idx = (idx + 1) % len(_MERGED_PALETTE)
         color_map[plan] = _MERGED_PALETTE[idx]
     return color_map
 
