@@ -20,6 +20,7 @@ Standards:
 
 import plotly.graph_objects as go
 from app.theme import get_theme_colors
+from app.config import APP_COLORS
 
 LINE_WIDTH = 1.6
 LINE_OPACITY = 0.85
@@ -41,13 +42,25 @@ DELTA_COLOR = "#22C55E"     # Green
 
 
 def _entity_color_map(names):
-    """Assign colors to entity names deterministically"""
+    """Assign colors to entity names using shared APP_COLORS from config"""
+    # Handle variants with spaces (e.g. "CT - JP" → "CT-JP")
+    def _normalize(n):
+        return n.replace(" - ", "-").replace(" -", "-").replace("- ", "-")
+
     cmap = {}
     for name in sorted(names):
-        idx = hash(name) % len(_ENTITY_PALETTE)
-        cmap[name] = _ENTITY_PALETTE[idx]
+        normalized = _normalize(name)
+        if normalized in APP_COLORS:
+            cmap[name] = APP_COLORS[normalized]
+        else:
+            # Fallback: try 2-letter prefix, then hash
+            prefix = name[:2].upper()
+            if prefix in APP_COLORS:
+                cmap[name] = APP_COLORS[prefix]
+            else:
+                idx = hash(name) % len(_ENTITY_PALETTE)
+                cmap[name] = _ENTITY_PALETTE[idx]
     return cmap
-
 
 def _empty_figure(colors, message="No data available for selected filters"):
     fig = go.Figure()
@@ -273,7 +286,7 @@ def build_pie_chart(labels, values, theme="dark"):
         pull=[0.02] * len(labels),
         hole=0,
         marker=dict(
-            colors=[_ENTITY_PALETTE[hash(l) % len(_ENTITY_PALETTE)] for l in labels],
+            colors=[_entity_color_map(labels).get(l, "#6B7280") for l in labels],
             line=dict(color=colors["card_bg"], width=1),
         ),
     )])
