@@ -2,21 +2,20 @@
 Data layer for All Metrics Merged Dashboard
 
 Handles:
-- Loading 9 BQ tables into GCS cache
+- Loading 8 BQ tables into GCS cache
 - Preloading all tables at startup
 - In-memory filtering and aggregation
 - Refresh BQ/GCS functions
 
 Tables:
 1. Plan_List              - Plan metadata
-2. Merged_Spend_Split_TBL - Ad spend data
-3. User_Count_by_Day      - Daily user counts
-4. 15K_Main_Table_30      - Main metrics (T30D)
-5. 15K_Main_Table_300     - Main metrics (T300D)
-6. Entity_Level_Main_MP   - Entity-level metrics
-7. 15K_Main_Table_MP      - Main table MP
-8. VPU.15K_Main_Table     - VPU main (non-merged)
-9. VPU.15K_Main_Table_300 - VPU 300D (non-merged)
+2. User_Count_by_Day      - Daily user counts
+3. 15K_Main_Table_30      - Main metrics (T30D) + Allocated_Spend_Total
+4. 15K_Main_Table_300     - Main metrics (T300D)
+5. Entity_Level_Main_MP   - Entity-level metrics
+6. 15K_Main_Table_MP      - Main table MP
+7. VPU.15K_Main_Table     - VPU main (non-merged)
+8. VPU.15K_Main_Table_300 - VPU 300D (non-merged)
 """
 
 import pandas as pd
@@ -40,11 +39,7 @@ MERGED_TABLES = {
         "active": "merged_cache/plan_list_active.parquet",
         "staging": "merged_cache/plan_list_staging.parquet",
     },
-    "spend": {
-        "bq": "variant-finance-data-project.Ad_spend_data.Merged_Spend_Split_TBL",
-        "active": "merged_cache/spend_active.parquet",
-        "staging": "merged_cache/spend_staging.parquet",
-    },
+
     "user_count": {
         "bq": "variant-finance-data-project.VPU_Merged.User_Count_by_Day",
         "active": "merged_cache/user_count_active.parquet",
@@ -197,7 +192,7 @@ def get_merged_cache_info():
 def get_app_names():
     """Get unique App_Name values across main tables"""
     apps = set()
-    for key in ["main_30", "plan_list", "spend", "user_count"]:
+for key in ["main_30", "plan_list", "user_count"]:
         df = _get_df(key)
         if not df.empty and "App_Name" in df.columns:
             apps.update(df["App_Name"].dropna().unique())
@@ -211,10 +206,7 @@ def get_plan_names_for_app(app_name, table_key="main_30"):
         return []
     col = "Product_Name_Final"
     if col not in df.columns:
-        # Spend table uses Product_Name_Final_Merged
-        col = "Product_Name_Final_Merged"
-        if col not in df.columns:
-            return []
+        return []
     filtered = df[df["App_Name"] == app_name]
     return sorted(filtered[col].dropna().unique().tolist())
 
@@ -227,9 +219,8 @@ def get_vpu_plan_names_for_app(app_name):
 def get_date_range():
     """Get min/max dates across all date-bearing tables"""
     all_dates = []
-    date_col_map = {
+date_col_map = {
         "main_30": "Report_date",
-        "spend": "Date",
         "user_count": "Date_of_Sale",
     }
     for key, col in date_col_map.items():
@@ -259,22 +250,22 @@ def get_plan_details(app_name):
 
 
 def get_spend_by_plan(app_name, start_date, end_date):
-    """Tab 1 Chart 2: SUM(allocated_spend) per Product_Name_Final_Merged per Date"""
-    df = _get_df("spend")
+    """Tab 1 Chart 2: SUM(Allocated_Spend_Total) per Product_Name_Final per Report_date"""
+    df = _get_df("main_30")
     if df.empty:
         return pd.DataFrame()
     df = df.copy()
-    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    df["Report_date"] = pd.to_datetime(df["Report_date"], errors="coerce")
     mask = (
         (df["App_Name"] == app_name) &
-        (df["Date"] >= pd.Timestamp(start_date)) &
-        (df["Date"] <= pd.Timestamp(end_date))
+        (df["Report_date"] >= pd.Timestamp(start_date)) &
+        (df["Report_date"] <= pd.Timestamp(end_date))
     )
     filtered = df.loc[mask]
     if filtered.empty:
         return pd.DataFrame()
-    grouped = filtered.groupby(["Product_Name_Final_Merged", "Date"], as_index=False)["allocated_spend"].sum()
-    grouped.rename(columns={"Product_Name_Final_Merged": "Plan_Name", "Date": "Report_date", "allocated_spend": "value"}, inplace=True)
+    grouped = filtered.groupby(["Product_Name_Final", "Report_date"], as_index=False)["Allocated_Spend_Total"].sum()
+    grouped.rename(columns={"Product_Name_Final": "Plan_Name", "Allocated_Spend_Total": "value"}, inplace=True)
     return grouped.sort_values(["Plan_Name", "Report_date"])
 
 
@@ -302,22 +293,22 @@ def get_users_by_plan(app_name, start_date, end_date, plan_name=None):
 
 def get_spend_by_plan_single(app_name, start_date, end_date, plan_name):
     """Tab 2 Chart 4: Spend for a single plan"""
-    df = _get_df("spend")
+    df = _get_df("main_30")
     if df.empty:
         return pd.DataFrame()
     df = df.copy()
-    df["Date"] = pd.to_datetime(df["Date"], errors="coerce")
+    df["Report_date"] = pd.to_datetime(df["Report_date"], errors="coerce")
     mask = (
         (df["App_Name"] == app_name) &
-        (df["Date"] >= pd.Timestamp(start_date)) &
-        (df["Date"] <= pd.Timestamp(end_date)) &
-        (df["Product_Name_Final_Merged"] == plan_name)
+        (df["Report_date"] >= pd.Timestamp(start_date)) &
+        (df["Report_date"] <= pd.Timestamp(end_date)) &
+        (df["Product_Name_Final"] == plan_name)
     )
     filtered = df.loc[mask]
     if filtered.empty:
         return pd.DataFrame()
-    grouped = filtered.groupby(["Product_Name_Final_Merged", "Date"], as_index=False)["allocated_spend"].sum()
-    grouped.rename(columns={"Product_Name_Final_Merged": "Plan_Name", "Date": "Report_date", "allocated_spend": "value"}, inplace=True)
+    grouped = filtered.groupby(["Product_Name_Final", "Report_date"], as_index=False)["Allocated_Spend_Total"].sum()
+    grouped.rename(columns={"Product_Name_Final": "Plan_Name", "Allocated_Spend_Total": "value"}, inplace=True)
     return grouped.sort_values(["Plan_Name", "Report_date"])
 
 
