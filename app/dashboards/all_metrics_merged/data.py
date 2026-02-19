@@ -100,7 +100,7 @@ def _get_df(key):
 # =============================================================================
 
 def preload_merged_tables():
-    """Load all 9 tables from GCS into memory at startup"""
+    """Load all 8 tables from GCS into memory at startup"""
     global _merged_cache
     bucket = get_gcs_bucket()
 
@@ -192,7 +192,7 @@ def get_merged_cache_info():
 def get_app_names():
     """Get unique App_Name values across main tables"""
     apps = set()
-for key in ["main_30", "plan_list", "user_count"]:
+    for key in ["main_30", "plan_list", "user_count"]:
         df = _get_df(key)
         if not df.empty and "App_Name" in df.columns:
             apps.update(df["App_Name"].dropna().unique())
@@ -218,8 +218,8 @@ def get_vpu_plan_names_for_app(app_name):
 
 def get_date_range():
     """Get min/max dates across all date-bearing tables"""
-    all_dates = []
-date_col_map = {
+all_dates = []
+    date_col_map = {
         "main_30": "Report_date",
         "user_count": "Date_of_Sale",
     }
