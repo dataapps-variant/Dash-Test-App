@@ -15,7 +15,7 @@ import dash_bootstrap_components as dbc
 import dash_ag_grid as dag
 
 from app.theme import get_theme_colors
-from app.colors import build_plan_color_map
+from app.dashboards.all_metrics_merged.charts import build_merged_color_map
 from app.charts import create_legend_component
 from app.dashboards.all_metrics_merged.layout import chart_card, table_card
 from app.dashboards.all_metrics_merged.charts import (
@@ -274,7 +274,7 @@ def register_callbacks(app):
         colors = get_theme_colors(theme)
         legend_content = html.Div()
         if plans:
-            color_map = build_plan_color_map(plans)
+            color_map = build_merged_color_map(plans)
             legend_content = create_legend_component(plans, color_map, theme)
 
         return dbc.Card([
