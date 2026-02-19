@@ -14,7 +14,24 @@ Standards:
 
 import plotly.graph_objects as go
 from app.theme import get_theme_colors
-from app.colors import build_plan_color_map
+# Distinct palette for merged dashboard (visible on dark background)
+_MERGED_PALETTE = [
+    "#E74C3C", "#3B82F6", "#22C55E", "#F59E0B", "#A855F7",
+    "#EC4899", "#06B6D4", "#F97316", "#8B5CF6", "#14B8A6",
+    "#EF4444", "#6366F1", "#84CC16", "#D946EF", "#0EA5E9",
+    "#FB923C", "#34D399", "#F472B6", "#38BDF8", "#FBBF24",
+]
+
+def build_merged_color_map(plan_names):
+    """Assign visually distinct colors to plans, deterministic by plan name hash"""
+    color_map = {}
+    for plan in sorted(plan_names):
+        idx = hash(plan) % len(_MERGED_PALETTE)
+        # Handle collisions by shifting
+        while _MERGED_PALETTE[idx] in color_map.values() and len(color_map) < len(_MERGED_PALETTE):
+            idx = (idx + 1) % len(_MERGED_PALETTE)
+        color_map[plan] = _MERGED_PALETTE[idx]
+    return color_map
 
 LINE_WIDTH = 1.6
 LINE_OPACITY = 0.7
@@ -124,7 +141,7 @@ def build_plan_line_chart(data_df, display_name, format_type="dollar", date_rang
     data_df = data_df[data_df["Plan_Name"].isin(active_plans)]
 
     unique_plans = sorted(data_df["Plan_Name"].unique())
-    color_map = build_plan_color_map(unique_plans)
+    color_map = build_merged_color_map(unique_plans)
 
     fig = go.Figure()
     for plan in unique_plans:
@@ -230,7 +247,7 @@ def build_stacked_area_chart(data_df, display_name, date_range=None, theme="dark
     data_df = data_df[data_df["Plan_Name"].isin(active_plans)]
 
     unique_plans = sorted(data_df["Plan_Name"].unique())
-    color_map = build_plan_color_map(unique_plans)
+    color_map = build_merged_color_map(unique_plans)
 
     fig = go.Figure()
     for plan in unique_plans:
