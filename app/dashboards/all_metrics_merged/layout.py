@@ -29,7 +29,7 @@ def create_merged_layout(user, theme="dark"):
     app_names = get_app_names()
     default_app = app_names[0] if app_names else "CT-JP"
 
-merged_cache_info = get_merged_cache_info()
+    merged_cache_info = get_merged_cache_info()
 
     return html.Div([
         # Header - Back left, Title center, Logout right
