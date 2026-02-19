@@ -98,7 +98,7 @@ def _base_layout(colors, format_type="dollar", date_range=None):
         xaxis=dict(
             gridcolor=colors["border"], linecolor=colors["border"],
             tickfont=dict(color=colors["text_secondary"]),
-            tickformat="%b %d, '%y", hoverformat="%b %d, '%y", range=xrange, fixedrange=False,
+            tickformat="%b %d", hoverformat="%b %d, '%y", range=xrange, fixedrange=False,
         ),
         yaxis=dict(
             gridcolor=colors["border"], linecolor=colors["border"],
