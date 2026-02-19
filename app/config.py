@@ -50,11 +50,12 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "variant-dashboard-secret-key-change-i
 DASHBOARDS = [
     {"id": "icarus_historical", "name": "ICARUS - Plan (Historical)", "icon": "📊", "enabled": True},
     {"id": "icarus_multi", "name": "ICARUS - Multi", "icon": "📈", "enabled": True},
+    {"id": "all_metrics_merged", "name": "Metrics Merged", "icon": "📊", "enabled": True},
+    {"id": "daedalus", "name": "Daedalus", "icon": "🏛️", "enabled": True},
     {"id": "vol_val_plan", "name": "Vol/Val Plan Level", "icon": "📉", "enabled": False},
     {"id": "icarus_cohort", "name": "ICARUS - Cohort", "icon": "👥", "enabled": False},
     {"id": "cwc", "name": "CWC", "icon": "🔄", "enabled": False},
     {"id": "vol_val_entity", "name": "Vol/Val Entity Level", "icon": "🏢", "enabled": False},
-    {"id": "all_metrics_merged", "name": "All Metrics Merged", "icon": "📊", "enabled": True},
 ]
 
 # =============================================================================
