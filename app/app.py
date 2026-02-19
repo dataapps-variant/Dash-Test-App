@@ -50,6 +50,10 @@ from app.dashboards.icarus_multi import callbacks as multi_callbacks
 from app.dashboards.all_metrics_merged.layout import create_merged_layout
 from app.dashboards.all_metrics_merged import callbacks as merged_callbacks
 from app.dashboards.all_metrics_merged.data import preload_merged_tables, get_merged_cache_info
+# Daedalus dashboard
+from app.dashboards.daedalus.layout import create_daedalus_layout
+from app.dashboards.daedalus.data import preload_daedalus_tables
+import app.dashboards.daedalus.callbacks as daedalus_callbacks
 # =============================================================================
 # APP INITIALIZATION
 # =============================================================================
@@ -117,6 +121,7 @@ def preload_data():
 
 # Preload data when the module is imported (happens once with --preload)
 preload_data()
+preload_daedalus_tables()
 
 # Session cookie name
 SESSION_COOKIE = "variant_session_id"
@@ -615,7 +620,9 @@ def render_page(session_data, current_page, theme):
     elif current_page == "icarus_multi":
         return create_icarus_multi_layout(user, theme), create_admin_layout(theme)
     elif current_page == "all_metrics_merged":
-        return create_merged_layout(user, theme), create_admin_layout(theme)    
+        return create_merged_layout(user, theme), create_admin_layout(theme) 
+    elif current_page == "daedalus":
+        return create_daedalus_layout(user, theme), create_admin_layout(theme)   
     else:
         return create_landing_layout(user, theme), create_admin_layout(theme)
 
@@ -1304,7 +1311,15 @@ def handle_refresh(bq_clicks, gcs_clicks):
             return dbc.Alert(f"Partial failure: {' | '.join(errors)}", color="warning", dismissable=True)
     
     return no_update
-
+@callback(
+    Output("page-store", "data", allow_duplicate=True),
+    Input("nav-btn-daedalus", "n_clicks"),
+    prevent_initial_call=True,
+)
+def navigate_to_daedalus(n_clicks):
+    if n_clicks:
+        return "daedalus"
+    return no_update
 
 # =============================================================================
 # REGISTER DASHBOARD CALLBACKS
@@ -1312,6 +1327,7 @@ def handle_refresh(bq_clicks, gcs_clicks):
 historical_callbacks.register_callbacks(app)
 multi_callbacks.register_callbacks(app)
 merged_callbacks.register_callbacks(app)
+daedalus_callbacks.register_callbacks(app)
 
 # =============================================================================
 # RUN APPLICATION
