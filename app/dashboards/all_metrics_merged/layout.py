@@ -156,9 +156,8 @@ def create_merged_layout(user, theme="dark"):
         html.Hr(),
         dbc.Row([
             dbc.Col([
-                dbc.Button("Refresh BQ", id="refresh-bq-btn", color="warning", size="sm", className="me-2"),
-                dbc.Button("Refresh GCS", id="refresh-gcs-btn", color="info", size="sm", className="me-2"),
-                dbc.Button("Refresh Merged (excl. Spend)", id="refresh-merged-no-spend-btn", color="success", size="sm"),
+dbc.Button("Refresh BQ", id="refresh-bq-btn", color="warning", size="sm", className="me-2"),
+                dbc.Button("Refresh GCS", id="refresh-gcs-btn", color="info", size="sm"),
             ], width=6),
             dbc.Col([
                 html.Div(id="refresh-status")
