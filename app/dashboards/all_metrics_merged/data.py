@@ -218,8 +218,8 @@ def get_vpu_plan_names_for_app(app_name):
 
 def get_date_range():
     """Get min/max dates across all date-bearing tables"""
-all_dates = []
-date_col_map = {
+    all_dates = []
+    date_col_map = {
         "main_30": "Report_date",
         "user_count": "Date_of_Sale",
     }
