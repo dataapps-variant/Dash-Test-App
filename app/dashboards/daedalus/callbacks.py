@@ -429,13 +429,13 @@ def register_callbacks(app):
             users_fig = build_actual_target_lines(vg_df.rename(columns={"actual_users": "actual", "target_users": "target"}),
                                                    "Actual Users", "Target Users", "number", theme=THEME)
             rows.append(html.Div([
-                dbc.Row([
-                    dbc.Col(_section_title("Monthly Spend Pacing VG (Portfolio)", colors), width=6),
-                    dbc.Col(_section_title("Monthly Users Pacing VG", colors), width=6),
-                ]),
+                _section_title("Monthly Spend Pacing VG (Portfolio)", colors),
                 dbc.Row([
                     dbc.Col(dcc.Graph(figure=spend_fig, config=CHART_CONFIG), width=6),
-                    dbc.Col(dcc.Graph(figure=users_fig, config=CHART_CONFIG), width=6),
+                    dbc.Col([
+                        _section_title("Monthly Users Pacing VG", colors),
+                        dcc.Graph(figure=users_fig, config=CHART_CONFIG),
+                    ], width=6),
                 ]),
             ], style=_card_style(colors)))
 
@@ -450,16 +450,16 @@ def register_callbacks(app):
             users_fig = build_actual_target_lines(users_df, "Actual Users", "Target Users", "number", theme=THEME)
 
             rows.append(html.Div([
-                dbc.Row([
-                    dbc.Col(_section_title(f"Monthly Spend Pacing {app_name}", colors), width=6),
-                    dbc.Col(_section_title(f"Monthly Users Pacing {app_name}", colors), width=6),
-                ]),
+                _section_title(f"Monthly Pacing {app_name}", colors),
                 dbc.Row([
                     dbc.Col(dcc.Graph(figure=spend_fig, config=CHART_CONFIG), width=6),
-                    dbc.Col(dcc.Graph(figure=users_fig, config=CHART_CONFIG), width=6),
+                    dbc.Col([
+                        _section_title(f"Monthly Users Pacing {app_name}", colors),
+                        dcc.Graph(figure=users_fig, config=CHART_CONFIG),
+                    ], width=6),
                 ]),
             ], style=_card_style(colors)))
-            
+
         return html.Div(rows)
 
     # -----------------------------------------------------------------
