@@ -337,17 +337,17 @@ def register_callbacks(app):
         spend_section = html.Div([
             _section_title("Spend Pacing: Actual vs Target (MTD)", colors),
             spend_pivot_grid,
-            html.H6("Monthly Spend Pacing", style={"color": colors["text_secondary"], "fontSize": "13px", "marginTop": "12px", "marginBottom": "4px"}),
+            _section_title("Monthly Spend Pacing", colors),
             dbc.Row([
                 dbc.Col(dcc.Graph(figure=spend_lines_fig, config=CHART_CONFIG), width=12),
             ], className="mb-2"),
             dbc.Row([
                 dbc.Col([
-                    html.H6("Monthly Portfolio Pacing: Spend", style={"color": colors["text_secondary"], "fontSize": "13px", "marginBottom": "4px"}),
+                    _section_title("Monthly Portfolio Pacing: Spend", colors),
                     dcc.Graph(figure=spend_total_fig, config=CHART_CONFIG),
                 ], width=6),
                 dbc.Col([
-                    html.H6("Marketing Spend: Actual vs Target (MTD)", style={"color": colors["text_secondary"], "fontSize": "13px", "marginBottom": "4px"}),
+                    _section_title("Marketing Spend: Actual vs Target (MTD)", colors),
                     dcc.Graph(figure=spend_bar_fig, config=CHART_CONFIG),
                 ], width=6),
             ]),
@@ -367,17 +367,17 @@ def register_callbacks(app):
         users_section = html.Div([
             _section_title("New Users: Actual vs Target (MTD)", colors),
             users_pivot_grid,
-            html.H6("Monthly New Users Pacing", style={"color": colors["text_secondary"], "fontSize": "13px", "marginTop": "12px", "marginBottom": "4px"}),
+            _section_title("Monthly New Users Pacing", colors),
             dbc.Row([
                 dbc.Col(dcc.Graph(figure=users_lines_fig, config=CHART_CONFIG), width=12),
             ], className="mb-2"),
             dbc.Row([
                 dbc.Col([
-                    html.H6("Monthly New User Pacing: Actual vs Target", style={"color": colors["text_secondary"], "fontSize": "13px", "marginBottom": "4px"}),
+                    _section_title("Monthly New User Pacing: Actual vs Target", colors),
                     dcc.Graph(figure=users_total_fig, config=CHART_CONFIG),
                 ], width=6),
                 dbc.Col([
-                    html.H6("New Users: Actual vs Target (MTD)", style={"color": colors["text_secondary"], "fontSize": "13px", "marginBottom": "4px"}),
+                    _section_title("New Users: Actual vs Target (MTD)", colors),
                     dcc.Graph(figure=users_bar_fig, config=CHART_CONFIG),
                 ], width=6),
             ]),
@@ -392,7 +392,7 @@ def register_callbacks(app):
         cac_section = html.Div([
             _section_title("CAC: Actual vs Target (MTD)", colors),
             cac_pivot_grid,
-            html.H6("MTD CAC Targets", style={"color": colors["text_secondary"], "fontSize": "13px", "marginTop": "12px", "marginBottom": "4px"}),
+            _section_title("MTD CAC Targets", colors),
             dbc.Row([
                 dbc.Col(dcc.Graph(figure=cac_bar_fig, config=CHART_CONFIG), width=12),
             ]),
@@ -433,7 +433,7 @@ def register_callbacks(app):
                 dbc.Row([
                     dbc.Col(dcc.Graph(figure=spend_fig, config=CHART_CONFIG), width=6),
                     dbc.Col([
-                        html.H6("Monthly Users Pacing VG", style={"color": colors["text_secondary"], "fontSize": "13px", "marginBottom": "4px"}),
+                        _section_title("Monthly Users Pacing VG", colors),
                         dcc.Graph(figure=users_fig, config=CHART_CONFIG),
                     ], width=6),
                 ]),
@@ -454,7 +454,7 @@ def register_callbacks(app):
                 dbc.Row([
                     dbc.Col(dcc.Graph(figure=spend_fig, config=CHART_CONFIG), width=6),
                     dbc.Col([
-                        html.H6(f"Monthly Users Pacing {app_name}", style={"color": colors["text_secondary"], "fontSize": "13px", "marginBottom": "4px"}),
+                        _section_title(f"Monthly Users Pacing {app_name}", colors),
                         dcc.Graph(figure=users_fig, config=CHART_CONFIG),
                     ], width=6),
                 ]),
