@@ -476,7 +476,7 @@ def register_callbacks(app):
             for col in metric_cols:
                 if col in app_df.columns:
                     label = col.replace("_", " ")
-                    dash_style = "dot" if "T7D" in col else "solid"
+                    dash_style = "solid" if "T7D" in col else "dot"
                     color = "#06B6D4" if "Daily" in col else "#F97316"
                     fig.add_trace(go.Scatter(
                         x=app_df["Date"], y=app_df[col],
