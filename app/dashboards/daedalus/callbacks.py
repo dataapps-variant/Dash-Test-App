@@ -129,9 +129,17 @@ def _pivot_grid(pivot_df, colors, grid_id):
 # =============================================================================
 
 def _build_app_checklist(apps, id_prefix, colors, default_all=True):
-    """Build app name checklist with all/none toggle"""
+    """Build app name checklist with Select All toggle"""
     return html.Div([
         html.Div("App Name", style={"color": colors["text_secondary"], "fontSize": "12px", "marginBottom": "4px"}),
+        dbc.Checklist(
+            options=[{"label": "Select All", "value": "__all__"}],
+            value=["__all__"] if default_all else [],
+            id=f"{id_prefix}-select-all-apps",
+            inline=True,
+            className="daedalus-checkbox",
+            style={"fontSize": "12px", "fontWeight": "600", "marginBottom": "4px"},
+        ),
         dbc.Checklist(
             options=[{"label": a, "value": a} for a in apps],
             value=apps if default_all else [],
@@ -172,6 +180,14 @@ def _build_date_picker(id_str, min_date, max_date, default_date, label, colors):
 def _build_metric_checklist(metrics, id_str, colors, default_all=True):
     return html.Div([
         html.Div("Metrics", style={"color": colors["text_secondary"], "fontSize": "12px", "marginBottom": "4px"}),
+        dbc.Checklist(
+            options=[{"label": "Select All", "value": "__all__"}],
+            value=["__all__"] if default_all else [],
+            id=f"{id_str}-select-all",
+            inline=True,
+            className="daedalus-checkbox",
+            style={"fontSize": "12px", "fontWeight": "600", "marginBottom": "4px"},
+        ),
         dbc.Checklist(
             options=[{"label": m, "value": m} for m in metrics],
             value=metrics if default_all else [],
@@ -233,11 +249,13 @@ def register_callbacks(app):
     # -----------------------------------------------------------------
     @app.callback(
         Output("daedalus-tab1-charts", "children"),
-        [Input("tab1-app-checklist", "value"),
-         Input("tab1-date-picker", "date"),
-         Input("tab1-month-select", "value")],
+        Input("tab1-load-btn", "n_clicks"),
+        [State("tab1-app-checklist", "value"),
+         State("tab1-date-picker", "date"),
+         State("tab1-month-select", "value")],
+        prevent_initial_call=True,
     )
-    def update_tab1_charts(app_names, selected_date, month_str):
+    def update_tab1_charts(n_clicks, app_names, selected_date, month_str):
         colors = _colors()
         if not app_names or not selected_date or not month_str:
             return html.Div("Select filters", style={"color": colors["text_secondary"]})
@@ -321,9 +339,11 @@ def register_callbacks(app):
     # -----------------------------------------------------------------
     @app.callback(
         Output("daedalus-tab2-charts", "children"),
-        Input("tab2-month-select", "value"),
+        Input("tab2-load-btn", "n_clicks"),
+        State("tab2-month-select", "value"),
+        prevent_initial_call=True,
     )
-    def update_tab2_charts(month_str):
+    def update_tab2_charts(n_clicks, month_str):
         colors = _colors()
         if not month_str:
             return html.Div("Select a month", style={"color": colors["text_secondary"]})
@@ -375,11 +395,13 @@ def register_callbacks(app):
     # -----------------------------------------------------------------
     @app.callback(
         Output("daedalus-tab3-charts", "children"),
-        [Input("tab3-start-date", "date"),
-         Input("tab3-end-date", "date"),
-         Input("tab3-metric-checklist", "value")],
+        Input("tab3-load-btn", "n_clicks"),
+        [State("tab3-start-date", "date"),
+         State("tab3-end-date", "date"),
+         State("tab3-metric-checklist", "value")],
+        prevent_initial_call=True,
     )
-    def update_tab3_charts(start_date, end_date, metrics):
+    def update_tab3_charts(n_clicks, start_date, end_date, metrics):
         colors = _colors()
         if not start_date or not end_date or not metrics:
             return html.Div("Select filters", style={"color": colors["text_secondary"]})
@@ -442,12 +464,14 @@ def register_callbacks(app):
     # -----------------------------------------------------------------
     @app.callback(
         Output("daedalus-tab4-charts", "children"),
-        [Input("tab4-app-checklist", "value"),
-         Input("tab4-channel-checklist", "value"),
-         Input("tab4-start-date", "date"),
-         Input("tab4-end-date", "date")],
+        Input("tab4-load-btn", "n_clicks"),
+        [State("tab4-app-checklist", "value"),
+         State("tab4-channel-checklist", "value"),
+         State("tab4-start-date", "date"),
+         State("tab4-end-date", "date")],
+        prevent_initial_call=True,
     )
-    def update_tab4_charts(app_names, channels, start_date, end_date):
+    def update_tab4_charts(n_clicks, app_names, channels, start_date, end_date):
         colors = _colors()
         if not app_names or not channels or not start_date or not end_date:
             return html.Div("Select filters", style={"color": colors["text_secondary"]})
@@ -575,11 +599,13 @@ def register_callbacks(app):
     # -----------------------------------------------------------------
     @app.callback(
         Output("daedalus-tab5-charts", "children"),
-        [Input("tab5-app-checklist", "value"),
-         Input("tab5-start-date", "date"),
-         Input("tab5-end-date", "date")],
+        Input("tab5-load-btn", "n_clicks"),
+        [State("tab5-app-checklist", "value"),
+         State("tab5-start-date", "date"),
+         State("tab5-end-date", "date")],
+        prevent_initial_call=True,
     )
-    def update_tab5_charts(app_names, start_date, end_date):
+    def update_tab5_charts(n_clicks, app_names, start_date, end_date):
         colors = _colors()
         if not app_names or not start_date or not end_date:
             return html.Div("Select filters", style={"color": colors["text_secondary"]})
@@ -653,7 +679,124 @@ def register_callbacks(app):
             return html.Span(msg, style={"color": color, "fontSize": "12px"})
         return ""
 
+    # -----------------------------------------------------------------
+    # SELECT ALL SYNC CALLBACKS
+    # -----------------------------------------------------------------
 
+    # --- Tab 1: App Names ---
+    @app.callback(
+        Output("tab1-app-checklist", "value"),
+        Output("tab1-select-all-apps", "value"),
+        Input("tab1-select-all-apps", "value"),
+        Input("tab1-app-checklist", "value"),
+        State("daedalus-filter-options", "data"),
+        prevent_initial_call=True,
+    )
+    def sync_tab1_apps(select_all, selected, filter_opts):
+        trigger = callback_context.triggered_id
+        all_apps = filter_opts.get("daedalus_apps", [])
+        if trigger == "tab1-select-all-apps":
+            if "__all__" in select_all:
+                return all_apps, ["__all__"]
+            else:
+                return [], []
+        else:
+            if len(selected) == len(all_apps):
+                return selected, ["__all__"]
+            else:
+                return selected, []
+
+    # --- Tab 3: Metrics ---
+    @app.callback(
+        Output("tab3-metric-checklist", "value"),
+        Output("tab3-metric-checklist-select-all", "value"),
+        Input("tab3-metric-checklist-select-all", "value"),
+        Input("tab3-metric-checklist", "value"),
+        prevent_initial_call=True,
+    )
+    def sync_tab3_metrics(select_all, selected):
+        trigger = callback_context.triggered_id
+        all_metrics = ["Daily CAC", "T7D CAC"]
+        if trigger == "tab3-metric-checklist-select-all":
+            if "__all__" in select_all:
+                return all_metrics, ["__all__"]
+            else:
+                return [], []
+        else:
+            if len(selected) == len(all_metrics):
+                return selected, ["__all__"]
+            else:
+                return selected, []
+
+    # --- Tab 4: App Names ---
+    @app.callback(
+        Output("tab4-app-checklist", "value"),
+        Output("tab4-select-all-apps", "value"),
+        Input("tab4-select-all-apps", "value"),
+        Input("tab4-app-checklist", "value"),
+        State("daedalus-filter-options", "data"),
+        prevent_initial_call=True,
+    )
+    def sync_tab4_apps(select_all, selected, filter_opts):
+        trigger = callback_context.triggered_id
+        all_apps = filter_opts.get("subs_apps", [])
+        if trigger == "tab4-select-all-apps":
+            if "__all__" in select_all:
+                return all_apps, ["__all__"]
+            else:
+                return [], []
+        else:
+            if len(selected) == len(all_apps):
+                return selected, ["__all__"]
+            else:
+                return selected, []
+
+    # --- Tab 4: Channels ---
+    @app.callback(
+        Output("tab4-channel-checklist", "value"),
+        Output("tab4-select-all-channels", "value"),
+        Input("tab4-select-all-channels", "value"),
+        Input("tab4-channel-checklist", "value"),
+        State("daedalus-filter-options", "data"),
+        prevent_initial_call=True,
+    )
+    def sync_tab4_channels(select_all, selected, filter_opts):
+        trigger = callback_context.triggered_id
+        all_channels = filter_opts.get("subs_channels", [])
+        if trigger == "tab4-select-all-channels":
+            if "__all__" in select_all:
+                return all_channels, ["__all__"]
+            else:
+                return [], []
+        else:
+            if len(selected) == len(all_channels):
+                return selected, ["__all__"]
+            else:
+                return selected, []
+
+    # --- Tab 5: App Names ---
+    @app.callback(
+        Output("tab5-app-checklist", "value"),
+        Output("tab5-select-all-apps", "value"),
+        Input("tab5-select-all-apps", "value"),
+        Input("tab5-app-checklist", "value"),
+        State("daedalus-filter-options", "data"),
+        prevent_initial_call=True,
+    )
+    def sync_tab5_apps(select_all, selected, filter_opts):
+        trigger = callback_context.triggered_id
+        all_apps = filter_opts.get("cac_apps", [])
+        if trigger == "tab5-select-all-apps":
+            if "__all__" in select_all:
+                return all_apps, ["__all__"]
+            else:
+                return [], []
+        else:
+            if len(selected) == len(all_apps):
+                return selected, ["__all__"]
+            else:
+                return selected, []
+                
 # =============================================================================
 # TAB CONTENT BUILDERS (called from render_active_tab)
 # =============================================================================
@@ -679,6 +822,11 @@ def _build_tab1(colors, filter_opts):
         ], style={"backgroundColor": colors["card_bg"], "border": f"1px solid {colors['border']}",
                    "marginBottom": "16px"}),
 
+        # Load Data button
+        html.Div([
+            dbc.Button("Load Data", id="tab1-load-btn", color="primary", className="mt-2 mb-3")
+        ], style={"textAlign": "center"}),
+
         # Charts container (updated by callback)
         dcc.Loading(html.Div(id="daedalus-tab1-charts"), type="dot", color="#FFFFFF"),
     ])
@@ -698,6 +846,10 @@ def _build_tab2(colors, filter_opts):
             ])
         ], style={"backgroundColor": colors["card_bg"], "border": f"1px solid {colors['border']}",
                    "marginBottom": "16px"}),
+
+        html.Div([
+            dbc.Button("Load Data", id="tab2-load-btn", color="primary", className="mt-2 mb-3")
+        ], style={"textAlign": "center"}),
 
         dcc.Loading(html.Div(id="daedalus-tab2-charts"), type="dot", color="#FFFFFF"),
     ])
@@ -722,6 +874,10 @@ def _build_tab3(colors, filter_opts):
         ], style={"backgroundColor": colors["card_bg"], "border": f"1px solid {colors['border']}",
                    "marginBottom": "16px"}),
 
+        html.Div([
+            dbc.Button("Load Data", id="tab3-load-btn", color="primary", className="mt-2 mb-3")
+        ], style={"textAlign": "center"}),
+
         dcc.Loading(html.Div(id="daedalus-tab3-charts"), type="dot", color="#FFFFFF"),
     ])
 
@@ -741,6 +897,14 @@ def _build_tab4(colors, filter_opts):
                     dbc.Col(html.Div([
                         html.Div("Traffic Channel", style={"color": colors["text_secondary"], "fontSize": "12px", "marginBottom": "4px"}),
                         dbc.Checklist(
+                            options=[{"label": "Select All", "value": "__all__"}],
+                            value=["__all__"],
+                            id="tab4-select-all-channels",
+                            inline=True,
+                            className="daedalus-checkbox",
+                            style={"fontSize": "12px", "fontWeight": "600", "marginBottom": "4px"},
+                        ),
+                        dbc.Checklist(
                             options=[{"label": str(c), "value": str(c)} for c in subs_channels],
                             value=subs_channels,
                             id="tab4-channel-checklist",
@@ -759,6 +923,10 @@ def _build_tab4(colors, filter_opts):
             ])
         ], style={"backgroundColor": colors["card_bg"], "border": f"1px solid {colors['border']}",
                    "marginBottom": "16px"}),
+
+        html.Div([
+            dbc.Button("Load Data", id="tab4-load-btn", color="primary", className="mt-2 mb-3")
+        ], style={"textAlign": "center"}),
 
         dcc.Loading(html.Div(id="daedalus-tab4-charts"), type="dot", color="#FFFFFF"),
     ])
@@ -781,6 +949,10 @@ def _build_tab5(colors, filter_opts):
             ])
         ], style={"backgroundColor": colors["card_bg"], "border": f"1px solid {colors['border']}",
                    "marginBottom": "16px"}),
+
+        html.Div([
+            dbc.Button("Load Data", id="tab5-load-btn", color="primary", className="mt-2 mb-3")
+        ], style={"textAlign": "center"}),
 
         dcc.Loading(html.Div(id="daedalus-tab5-charts"), type="dot", color="#FFFFFF"),
     ])
