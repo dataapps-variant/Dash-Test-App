@@ -1,0 +1,875 @@
+/* Variant Dashboard - Black & White Theme */
+/* This file is auto-loaded by Dash from the assets folder */
+
+/* FULL SCREEN LAYOUT */
+html, body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 100vh;
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
+}
+
+#root, ._dash-loading {
+    background-color: #000000 !important;
+}
+
+/* Filter title */
+.filter-title {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 10px !important;
+    padding-bottom: 8px !important;
+    color: #999999 !important;
+    border-bottom: 1px solid #1C1C1C !important;
+}
+
+/* Bootstrap buttons override */
+.btn-primary {
+    background-color: #FFFFFF !important;
+    border-color: #FFFFFF !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
+}
+
+.btn-primary:hover {
+    background-color: #CCCCCC !important;
+    border-color: #CCCCCC !important;
+    color: #000000 !important;
+}
+
+.btn-secondary {
+    background-color: #0A0A0A !important;
+    border-color: #333333 !important;
+    color: #FFFFFF !important;
+}
+
+.btn-secondary:hover {
+    background-color: #1A1A1A !important;
+    border-color: #444444 !important;
+}
+
+/* Green refresh buttons */
+.refresh-btn-green {
+    background-color: #10B981 !important;
+    border-color: #10B981 !important;
+    color: #FFFFFF !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    padding: 4px 14px !important;
+}
+
+.refresh-btn-green:hover {
+    background-color: #059669 !important;
+    border-color: #059669 !important;
+    color: #FFFFFF !important;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #000000;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555555;
+}
+
+/* Plotly chart background */
+.js-plotly-plot .plotly .main-svg {
+    background: transparent !important;
+}
+
+/* Card styling */
+.card {
+    border-radius: 12px !important;
+    padding: 20px !important;
+    background: #0A0A0A !important;
+    border: 1px solid #1C1C1C !important;
+}
+
+/* Alerts */
+.alert {
+    border-radius: 8px !important;
+    background: #0A0A0A !important;
+    color: #FFFFFF !important;
+    border: 1px solid #1C1C1C !important;
+}
+
+.alert-success {
+    border-left: 4px solid #4ADE80 !important;
+}
+
+.alert-warning {
+    border-left: 4px solid #FACC15 !important;
+}
+
+.alert-danger {
+    border-left: 4px solid #F87171 !important;
+}
+
+.alert-info {
+    border-left: 4px solid #FFFFFF !important;
+}
+
+/* Tables */
+.table {
+    color: #FFFFFF !important;
+    --bs-table-bg: #000000 !important;
+    --bs-table-striped-bg: #0A0A0A !important;
+    --bs-table-hover-bg: #1A1A1A !important;
+    --bs-table-border-color: #1C1C1C !important;
+}
+
+.table > thead {
+    background-color: #141414 !important;
+}
+
+.table th {
+    color: #FFFFFF !important;
+    background-color: #141414 !important;
+    border-color: #1C1C1C !important;
+}
+
+.table td {
+    color: #FFFFFF !important;
+    border-color: #1C1C1C !important;
+}
+
+.table-striped > tbody > tr:nth-of-type(odd) {
+    --bs-table-bg-type: #0A0A0A !important;
+    color: #FFFFFF !important;
+}
+
+.table-hover > tbody > tr:hover {
+    --bs-table-bg-state: #1A1A1A !important;
+    color: #FFFFFF !important;
+}
+
+/* Tabs - clean minimal style */
+.nav-tabs {
+    border-bottom: 1px solid #1C1C1C !important;
+}
+
+.nav-tabs .nav-link {
+    color: #999999 !important;
+    border: none !important;
+    font-weight: 400 !important;
+    padding: 8px 20px !important;
+    font-size: 14px !important;
+    border-radius: 0 !important;
+}
+
+.nav-tabs .nav-link.active {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    font-weight: 600 !important;
+    border-radius: 6px 6px 0 0 !important;
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+    background-color: #1A1A1A !important;
+    color: #FFFFFF !important;
+}
+
+/* Form controls */
+.form-control, .form-select {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+    border-color: #333333 !important;
+}
+
+/* Checkbox - grey unchecked, white tick when checked */
+.form-check-input {
+    background-color: #1A1A1A !important;
+    border-color: #444444 !important;
+}
+
+.form-check-input:checked {
+    background-color: #1A1A1A !important;
+    border-color: #FFFFFF !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23FFFFFF' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e") !important;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.15rem rgba(255, 255, 255, 0.2) !important;
+    border-color: #666666 !important;
+}
+
+.form-check-label {
+    color: #FFFFFF !important;
+}
+
+/* Date picker - NUCLEAR dark override for react-dates */
+/* Uses body prefix for higher specificity over Dash's built-in CSS */
+
+body .DateInput,
+body .DateInput_1,
+body [class*="DateInput"] {
+    background-color: #111111 !important;
+}
+
+body .DateInput_input,
+body .DateInput_input_1,
+body [class*="DateInput_input"] {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #333333 !important;
+    border-radius: 4px !important;
+    font-size: 14px !important;
+    padding: 6px 10px !important;
+    font-weight: 400 !important;
+}
+
+body .DateInput_input__focused,
+body [class*="DateInput_input__focused"] {
+    border-color: #666666 !important;
+}
+
+body .SingleDatePickerInput,
+body .SingleDatePickerInput_1,
+body [class*="SingleDatePickerInput"] {
+    background-color: #111111 !important;
+    border: none !important;
+    border-radius: 4px !important;
+}
+
+body .SingleDatePicker_picker,
+body .SingleDatePicker_picker_1,
+body [class*="SingleDatePicker_picker"] {
+    background-color: #111111 !important;
+    border: 1px solid #333333 !important;
+}
+
+body .DayPicker,
+body .DayPicker_1,
+body .DayPicker__horizontal,
+body [class*="DayPicker__horizontal"],
+body [class*="DayPicker_"] {
+    background: #111111 !important;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.8) !important;
+}
+
+body .DayPicker_transitionContainer,
+body [class*="DayPicker_transitionContainer"] {
+    background-color: #111111 !important;
+}
+
+body .DayPicker_weekHeader,
+body [class*="DayPicker_weekHeader"] {
+    color: #999999 !important;
+}
+
+body .DayPicker_weekHeader small {
+    color: #999999 !important;
+}
+
+body .CalendarMonthGrid,
+body [class*="CalendarMonthGrid"] {
+    background-color: #111111 !important;
+}
+
+body .CalendarMonth,
+body .CalendarMonth_1,
+body [class*="CalendarMonth_"] {
+    background-color: #111111 !important;
+}
+
+body .CalendarMonth_caption,
+body [class*="CalendarMonth_caption"] {
+    color: #FFFFFF !important;
+}
+
+body .CalendarMonth_caption strong {
+    color: #FFFFFF !important;
+    font-weight: 500 !important;
+}
+
+body .CalendarDay__default,
+body [class*="CalendarDay__default"] {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #222222 !important;
+}
+
+body .CalendarDay__default:hover {
+    background-color: #333333 !important;
+    color: #FFFFFF !important;
+    border: 1px solid #444444 !important;
+}
+
+body .CalendarDay__selected,
+body .CalendarDay__selected:hover,
+body .CalendarDay__selected:active,
+body [class*="CalendarDay__selected"] {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    border: 1px solid #FFFFFF !important;
+}
+
+body .CalendarDay__blocked_out_of_range,
+body .CalendarDay__blocked_out_of_range:hover,
+body [class*="CalendarDay__blocked"] {
+    color: #333333 !important;
+    background-color: #111111 !important;
+    border: 1px solid #1A1A1A !important;
+}
+
+body .DayPickerNavigation_button,
+body [class*="DayPickerNavigation_button"] {
+    background-color: #1A1A1A !important;
+    border: 1px solid #333333 !important;
+    border-radius: 4px !important;
+}
+
+body .DayPickerNavigation_button:hover {
+    background-color: #333333 !important;
+}
+
+body .DayPickerNavigation_svg__horizontal,
+body [class*="DayPickerNavigation_svg"] {
+    fill: #FFFFFF !important;
+}
+
+body .DayPickerKeyboardShortcuts_buttonReset,
+body [class*="DayPickerKeyboardShortcuts"] {
+    display: none !important;
+}
+
+body .DateInput_fang,
+body [class*="DateInput_fang"] {
+    display: none !important;
+}
+
+body .CalendarDay__today {
+    font-weight: 700 !important;
+    color: #10B981 !important;
+}
+
+/* Accordion */
+.accordion-button {
+    background-color: #0A0A0A !important;
+    color: #FFFFFF !important;
+    border: none !important;
+}
+
+.accordion-button:not(.collapsed) {
+    background-color: #0A0A0A !important;
+    color: #FFFFFF !important;
+    box-shadow: none !important;
+}
+
+.accordion-button::after {
+    filter: invert(1) !important;
+}
+
+.accordion-item {
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.accordion {
+    --bs-accordion-border-color: transparent !important;
+}
+
+/* Accordion body - subtle greyish background */
+.accordion-body {
+    background-color: #0D0D0D !important;
+    border: 1px solid #1C1C1C !important;
+    border-top: none !important;
+}
+
+/* Modal */
+.modal-content {
+    background-color: #0A0A0A !important;
+    border: 1px solid #1C1C1C !important;
+    color: #FFFFFF !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid #1C1C1C !important;
+    color: #FFFFFF !important;
+}
+
+.modal-title {
+    color: #FFFFFF !important;
+}
+
+/* Dropdown menus */
+.dropdown-menu {
+    background-color: #0A0A0A !important;
+    border: 1px solid #1C1C1C !important;
+}
+
+.dropdown-item {
+    color: #FFFFFF !important;
+}
+
+.dropdown-item:hover {
+    background-color: #1A1A1A !important;
+}
+
+.dropdown-item.disabled {
+    color: #666666 !important;
+}
+
+/* AG Grid full override for black theme */
+.ag-theme-alpine-dark .ag-header,
+.ag-theme-alpine .ag-header {
+    background-color: #141414 !important;
+    color: #FFFFFF !important;
+}
+
+.ag-theme-alpine-dark .ag-row,
+.ag-theme-alpine .ag-row {
+    color: #FFFFFF !important;
+}
+
+/* Force AG Grid black background everywhere */
+.ag-theme-alpine-dark .ag-root-wrapper,
+.ag-theme-alpine .ag-root-wrapper {
+    background-color: #000000 !important;
+    border-color: #1C1C1C !important;
+}
+
+.ag-theme-alpine-dark .ag-header,
+.ag-theme-alpine .ag-header {
+    background-color: #141414 !important;
+    color: #FFFFFF !important;
+    border-bottom: 1px solid #1C1C1C !important;
+}
+
+.ag-theme-alpine-dark .ag-header-cell,
+.ag-theme-alpine .ag-header-cell {
+    background-color: #141414 !important;
+    color: #FFFFFF !important;
+    border-right: 1px solid #1C1C1C !important;
+}
+
+.ag-theme-alpine-dark .ag-header-cell-label,
+.ag-theme-alpine .ag-header-cell-label {
+    color: #FFFFFF !important;
+}
+
+.ag-theme-alpine-dark .ag-row,
+.ag-theme-alpine .ag-row {
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
+    border-bottom: 1px solid #0D0D0D !important;
+}
+
+.ag-theme-alpine-dark .ag-row-odd,
+.ag-theme-alpine .ag-row-odd {
+    background-color: #0A0A0A !important;
+}
+
+.ag-theme-alpine-dark .ag-row-even,
+.ag-theme-alpine .ag-row-even {
+    background-color: #000000 !important;
+}
+
+.ag-theme-alpine-dark .ag-row-hover,
+.ag-theme-alpine .ag-row-hover {
+    background-color: #1A1A1A !important;
+}
+
+.ag-theme-alpine-dark .ag-cell,
+.ag-theme-alpine .ag-cell {
+    color: #FFFFFF;
+    border-right: 1px solid #0D0D0D !important;
+}
+.ag-theme-alpine-dark .ag-pinned-left-cols-container .ag-cell,
+.ag-theme-alpine .ag-pinned-left-cols-container .ag-cell {
+    background-color: inherit !important;
+    color: #FFFFFF !important;
+}
+
+.ag-theme-alpine-dark .ag-pinned-left-header,
+.ag-theme-alpine .ag-pinned-left-header {
+    background-color: #141414 !important;
+    border-right: 1px solid #1C1C1C !important;
+}
+
+.ag-theme-alpine-dark .ag-pinned-left-cols-container,
+.ag-theme-alpine .ag-pinned-left-cols-container {
+    border-right: 1px solid #1C1C1C !important;
+}
+
+.ag-theme-alpine-dark .ag-body-viewport,
+.ag-theme-alpine .ag-body-viewport {
+    background-color: #000000 !important;
+}
+
+.ag-theme-alpine-dark .ag-center-cols-viewport,
+.ag-theme-alpine .ag-center-cols-viewport {
+    background-color: #000000 !important;
+}
+
+/* AG Grid filter & menu popups */
+.ag-theme-alpine-dark .ag-menu,
+.ag-theme-alpine .ag-menu {
+    background-color: #0A0A0A !important;
+    color: #FFFFFF !important;
+    border: 1px solid #1C1C1C !important;
+}
+
+.ag-theme-alpine-dark .ag-filter-toolpanel,
+.ag-theme-alpine .ag-filter-toolpanel {
+    background-color: #0A0A0A !important;
+    color: #FFFFFF !important;
+}
+
+.ag-theme-alpine-dark .ag-text-field-input,
+.ag-theme-alpine .ag-text-field-input {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+    border-color: #333333 !important;
+}
+
+.ag-theme-alpine-dark .ag-icon,
+.ag-theme-alpine .ag-icon {
+    color: #999999 !important;
+}
+
+.ag-theme-alpine-dark .ag-paging-panel,
+.ag-theme-alpine .ag-paging-panel {
+    background-color: #000000 !important;
+    color: #FFFFFF !important;
+    border-top: 1px solid #1C1C1C !important;
+}
+
+/* Delta row coloring — green/red for positive/negative values */
+.ag-cell-green {
+    color: #22C55E !important;
+}
+
+.ag-cell-red {
+    color: #E74C3C !important;
+}
+
+/* Ensure no white backgrounds leak through */
+.container-fluid, .container, .row, .col {
+    background-color: transparent !important;
+}
+
+/* Plotly modebar on black */
+.modebar-btn path {
+    fill: #999999 !important;
+}
+
+.modebar-btn:hover path {
+    fill: #FFFFFF !important;
+}
+
+/* Clickable dashboard links in landing table */
+table a[id^="nav-btn-"] {
+    transition: all 0.15s ease;
+}
+
+table a[id^="nav-btn-"]:hover {
+    color: #FFFFFF !important;
+    border-bottom-color: #FFFFFF !important;
+    text-shadow: 0 0 8px rgba(255,255,255,0.3);
+}
+
+/* Compact spacing */
+.accordion-body {
+    padding: 14px !important;
+}
+
+.card-body {
+    padding: 12px !important;
+}
+
+.mb-4 {
+    margin-bottom: 12px !important;
+}
+
+.mb-3 {
+    margin-bottom: 8px !important;
+}
+
+hr {
+    margin: 10px 0 !important;
+    border-color: #1C1C1C !important;
+}
+
+/* Tighter filter title */
+.filter-title {
+    margin-bottom: 6px !important;
+    padding-bottom: 4px !important;
+    font-size: 12px !important;
+}
+
+/* Compact tab padding */
+.nav-tabs .nav-link {
+    padding: 8px 20px !important;
+    font-size: 14px !important;
+}
+
+/* Tighter accordion header */
+.accordion-button {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+}
+
+/* ===========================================
+   RESPONSIVE DESIGN - Tablet & Mobile
+   =========================================== */
+
+/* TABLET (768px - 1200px) */
+@media (max-width: 1200px) {
+    /* Tighter page padding */
+    body .dash-graph {
+        padding: 0 !important;
+    }
+
+    /* Smaller fonts */
+    h4 { font-size: 18px !important; }
+    h5 { font-size: 16px !important; }
+    h6 { font-size: 14px !important; }
+
+    /* Compact filter titles */
+    .filter-title {
+        font-size: 11px !important;
+    }
+
+    /* Smaller tab text */
+    .nav-tabs .nav-link {
+        padding: 5px 12px !important;
+        font-size: 13px !important;
+    }
+
+    /* AG Grid - smaller text */
+    .ag-theme-alpine-dark .ag-cell,
+    .ag-theme-alpine .ag-cell,
+    .ag-theme-alpine-dark .ag-header-cell-label,
+    .ag-theme-alpine .ag-header-cell-label {
+        font-size: 12px !important;
+    }
+
+    /* Reduce chart margins */
+    .js-plotly-plot {
+        margin: 0 !important;
+    }
+}
+
+/* MOBILE (below 768px) */
+@media (max-width: 768px) {
+    /* Full width page padding */
+    #page-content > div {
+        padding: 10px !important;
+    }
+
+    /* Stack header elements */
+    h4 { font-size: 16px !important; }
+    h5 { font-size: 14px !important; }
+    h6 { font-size: 13px !important; }
+
+    /* Login form - full width */
+    .card {
+        margin: 0 5px !important;
+    }
+
+    /* Buttons - compact */
+    .btn-sm {
+        font-size: 12px !important;
+        padding: 4px 8px !important;
+    }
+
+    .btn {
+        font-size: 13px !important;
+    }
+
+    /* Refresh strip - wrap to multiple lines */
+    #refresh-status {
+        display: block !important;
+        margin-top: 8px !important;
+        margin-left: 0 !important;
+    }
+
+    /* Tabs - full width */
+    .nav-tabs {
+        flex-wrap: nowrap !important;
+        overflow-x: auto !important;
+    }
+
+    .nav-tabs .nav-link {
+        padding: 5px 10px !important;
+        font-size: 12px !important;
+        white-space: nowrap !important;
+    }
+
+    /* Filters - tighter */
+    .accordion-body {
+        padding: 8px !important;
+    }
+
+    .accordion-button {
+        padding: 6px 10px !important;
+        font-size: 13px !important;
+    }
+
+    .filter-title {
+        font-size: 10px !important;
+        margin-bottom: 4px !important;
+        padding-bottom: 2px !important;
+    }
+
+    /* Form controls - smaller */
+    .form-control, .form-select {
+        font-size: 13px !important;
+        padding: 4px 8px !important;
+    }
+
+    .form-check-label {
+        font-size: 12px !important;
+    }
+
+    /* Date picker - prevent overflow */
+    .DateInput {
+        width: 100% !important;
+    }
+
+    .DateInput_input {
+        font-size: 12px !important;
+        padding: 4px 8px !important;
+    }
+
+    /* AG Grid - scrollable + compact */
+    .ag-theme-alpine-dark,
+    .ag-theme-alpine {
+        font-size: 11px !important;
+    }
+
+    .ag-theme-alpine-dark .ag-cell,
+    .ag-theme-alpine .ag-cell {
+        padding: 2px 6px !important;
+        font-size: 11px !important;
+    }
+
+    .ag-theme-alpine-dark .ag-header-cell,
+    .ag-theme-alpine .ag-header-cell {
+        padding: 2px 6px !important;
+        font-size: 11px !important;
+    }
+
+    /* Charts - stack vertically */
+    .row > [class*="col-"] {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Chart height - shorter on mobile */
+    .js-plotly-plot .plot-container {
+        max-height: 300px !important;
+    }
+
+    /* Legend - smaller */
+    .legend-container span,
+    div[style*="flexWrap"] span {
+        font-size: 11px !important;
+    }
+
+    /* Tables - horizontal scroll */
+    .table-responsive,
+    .table {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    /* Modal - full width on mobile */
+    .modal-dialog {
+        margin: 10px !important;
+        max-width: calc(100% - 20px) !important;
+    }
+
+    /* Dropdown menu */
+    .dropdown-menu {
+        font-size: 13px !important;
+    }
+
+    /* Alert messages */
+    .alert {
+        font-size: 13px !important;
+        padding: 8px 12px !important;
+    }
+}
+
+/* SMALL MOBILE (below 480px) */
+@media (max-width: 480px) {
+    #page-content > div {
+        padding: 6px !important;
+    }
+
+    h4 { font-size: 14px !important; }
+
+    .btn-sm {
+        font-size: 11px !important;
+        padding: 3px 6px !important;
+    }
+
+    /* Hide emoji prefixes on very small screens to save space */
+    .nav-tabs .nav-link {
+        font-size: 11px !important;
+    }
+
+    /* Even more compact AG Grid */
+    .ag-theme-alpine-dark .ag-cell,
+    .ag-theme-alpine .ag-cell {
+        font-size: 10px !important;
+        padding: 1px 4px !important;
+    }
+}
+
+/* =============================================================================
+   Dash dcc.Dropdown — fix white-on-white text in options list
+   ============================================================================= */
+.Select-menu-outer,
+.VirtualizedSelectFocusedOption,
+.VirtualizedSelectOption {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+}
+
+.VirtualizedSelectOption:hover,
+.VirtualizedSelectFocusedOption {
+    background-color: #333333 !important;
+    color: #FFFFFF !important;
+}
+
+.Select-value-label {
+    color: #FFFFFF !important;
+}
+
+.Select-placeholder {
+    color: #999999 !important;
+}
+
+.Select-control {
+    background-color: #111111 !important;
+    border-color: #333333 !important;
+}
+
+.Select-input > input {
+    color: #FFFFFF !important;
+}
+
+.Select-clear-zone,
+.Select-arrow-zone {
+    color: #999999 !important;
+}

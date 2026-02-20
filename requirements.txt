@@ -1,0 +1,23 @@
+# Variant Analytics Dashboard v2.0 - Dash Version
+
+# Core Dash
+dash>=2.14.0
+dash-bootstrap-components>=1.5.0
+dash-ag-grid>=31.0.0
+
+# Flask (for server)
+Flask>=3.0.0
+gunicorn>=21.0.0
+Flask-Caching>=2.0.0
+
+# Google Cloud
+google-cloud-bigquery>=3.11.0
+google-cloud-storage>=2.10.0
+
+# Data Processing
+pyarrow>=13.0.0
+pandas>=2.0.0
+db-dtypes>=1.1.0
+
+# Visualization
+plotly>=5.15.0
