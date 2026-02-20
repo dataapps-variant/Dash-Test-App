@@ -162,8 +162,9 @@ def _pivot_grid(pivot_df, colors, grid_id):
             cd["width"] = 160
             cd["type"] = "rightAligned"
             cd["valueFormatter"] = {"function": "params.value != null ? (typeof params.value === 'number' ? '$ ' + params.value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : params.value) : ''"}
+            cd["cellStyle"] = {"function": "var m = params.data && params.data.Metric || ''; if (m.indexOf('Delta') === -1 || params.value == null || typeof params.value !== 'number') return {}; if (m.indexOf('CAC') !== -1) return params.value < 0 ? {color: '#22C55E'} : params.value > 0 ? {color: '#E74C3C'} : {}; return params.value > 0 ? {color: '#22C55E'} : params.value < 0 ? {color: '#E74C3C'} : {};"}
         col_defs.append(cd)
-
+        
     return dag.AgGrid(
         id=grid_id,
         columnDefs=col_defs,
