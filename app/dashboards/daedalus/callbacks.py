@@ -169,7 +169,8 @@ def _pivot_grid(pivot_df, colors, grid_id):
         columnDefs=col_defs,
         rowData=pivot_df.to_dict("records"),
         defaultColDef={"resizable": True},
-        style={"height": "180px"},
+        dashGridOptions={"domLayout": "autoHeight"},
+        style={"width": "100%"},
         className="ag-theme-alpine-dark",
     )
 
