@@ -179,9 +179,9 @@ def preload_data():
     except Exception as e:
         logger.error(f"Preloading failed: {e}")
 
-# Preload data when the module is imported (happens once with --preload)
-preload_data()
-preload_daedalus_tables()
+# Preload disabled for faster startup - data loads lazily on first request
+# preload_data()
+# preload_daedalus_tables()
 
 # Session cookie name
 SESSION_COOKIE = "variant_session_id"

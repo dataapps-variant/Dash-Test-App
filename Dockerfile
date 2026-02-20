@@ -30,9 +30,8 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
 ENV PORT=8080
 ENV PYTHONUNBUFFERED=1
 
-# Run with Gunicorn - OPTIMIZED FOR SPEED
-# - 1 worker with preload = shared memory cache across all threads
-# - 8 threads for concurrency
-# - preload loads data ONCE at startup, shared by all threads
+# Run with Gunicorn
+# - 1 worker, 8 threads for concurrency
 # - 300s timeout for long-running data queries
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "--timeout", "300", "--preload", "--access-logfile", "-", "--error-logfile", "-", "app.app:server"]
+# - NO preload: data loads lazily on first request (faster startup)
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "1", "--threads", "8", "--timeout", "300", "--access-logfile", "-", "--error-logfile", "-", "app.app:server"]
