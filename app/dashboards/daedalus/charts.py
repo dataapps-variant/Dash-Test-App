@@ -193,12 +193,12 @@ def build_multi_app_lines(df, actual_label, target_label, format_type="dollar", 
         adf = df[df["App_Name"] == app].sort_values("Date")
         color = cmap.get(app, "#6B7280")
 
-        # Skip if all values are null
-        if adf["actual"].dropna().empty and adf["target"].dropna().empty:
+        # Skip if all values are null or all zero
+        if (adf["actual"].dropna().empty or (adf["actual"].dropna() == 0).all()) and (adf["target"].dropna().empty or (adf["target"].dropna() == 0).all()):
             continue
 
         # Actual (solid)
-        if not adf["actual"].dropna().empty:
+        if not adf["actual"].dropna().empty and not (adf["actual"].dropna() == 0).all():
             fig.add_trace(go.Scatter(
                 x=adf["Date"], y=adf["actual"],
                 mode="lines", name=f"{actual_label}, {app}",
@@ -209,7 +209,7 @@ def build_multi_app_lines(df, actual_label, target_label, format_type="dollar", 
                 showlegend=True,
             ))
         # Target (dotted)
-        if not adf["target"].dropna().empty:
+        if not adf["target"].dropna().empty and not (adf["target"].dropna() == 0).all():
             fig.add_trace(go.Scatter(
                 x=adf["Date"], y=adf["target"],
                 mode="lines", name=f"{target_label}, {app}",
@@ -344,7 +344,7 @@ def build_entity_lines(data_df, format_type="dollar", date_range=None, theme="da
     fig = go.Figure()
     for app in apps:
         adf = data_df[data_df["App_Name"] == app].sort_values("Date")
-        if adf[value_col].dropna().empty:
+        if adf[value_col].dropna().empty or (adf[value_col].dropna() == 0).all():
             continue
         color = cmap.get(app, "#6B7280")
 
@@ -435,7 +435,7 @@ def build_annotated_entity_lines(data_df, format_type="percent", date_range=None
     fig = go.Figure()
     for app in apps:
         adf = data_df[data_df["App_Name"] == app].sort_values("Date")
-        if adf[value_col].dropna().empty:
+        if adf[value_col].dropna().empty or (adf[value_col].dropna() == 0).all():
             continue
         color = cmap.get(app, "#6B7280")
 
