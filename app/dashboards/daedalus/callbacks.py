@@ -419,14 +419,18 @@ def register_callbacks(app):
 
             fig.update_layout(
                 height=300,
-                margin=dict(l=60, r=20, t=20, b=40),
+                margin=dict(l=60, r=20, t=40, b=40),
                 hovermode="x unified",
                 paper_bgcolor=colors["card_bg"],
                 plot_bgcolor=colors["card_bg"],
                 font=dict(family="Inter, sans-serif", size=12, color=colors["text_primary"]),
-                xaxis=dict(gridcolor=colors["border"], tickformat="%b %d"),
+                xaxis=dict(gridcolor=colors["border"], tickformat="%b %Y", hoverformat="%b %d, '%y"),
                 yaxis=dict(gridcolor=colors["border"], tickprefix="$"),
-                legend=dict(font=dict(color=colors["text_primary"]), bgcolor="rgba(0,0,0,0)"),
+                legend=dict(
+                    font=dict(color=colors["text_primary"], size=10),
+                    bgcolor="rgba(0,0,0,0)",
+                    orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
+                ),
                 showlegend=True,
             )
 
