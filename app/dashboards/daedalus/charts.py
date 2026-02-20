@@ -270,19 +270,28 @@ def build_grouped_bar(df, labels=("Actual", "Target", "Delta"), format_type="dol
 # =============================================================================
 
 def build_pie_chart(labels, values, theme="dark"):
-    """Build pie chart with outside labels showing name, value, %"""
+    """Build pie chart with outside labels — hide labels below 10%"""
     colors = get_theme_colors(theme)
     if not labels or not values or sum(values) == 0:
         return _empty_figure(colors)
 
     total = sum(values)
 
+    # Build custom text: show label only if slice >= 10%
+    custom_text = []
+    for l, v in zip(labels, values):
+        pct = v / total if total > 0 else 0
+        if pct >= 0.10:
+            custom_text.append(f"{l}: {v:,.0f} ({pct:.1%})")
+        else:
+            custom_text.append("")
+
     fig = go.Figure(data=[go.Pie(
         labels=labels,
         values=values,
-        textinfo="label+value+percent",
+        text=custom_text,
+        textinfo="text",
         textposition="outside",
-        texttemplate="%{label}: %{value:,.0f} (%{percent:.1%})",
         pull=[0.02] * len(labels),
         hole=0,
         marker=dict(
