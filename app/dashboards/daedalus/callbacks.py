@@ -113,7 +113,7 @@ def _pivot_grid(pivot_df, colors, grid_id):
             cd["type"] = "rightAligned"
             cd["valueFormatter"] = {"function": """
                 params.value != null ?
-                    (typeof params.value === 'number' ? '$ ' + params.value.toLocaleString('en-US', {maximumFractionDigits: 0}) : params.value)
+                    (typeof params.value === 'number' ? '$ ' + params.value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : params.value)
                     : ''
             """}
         col_defs.append(cd)
