@@ -738,9 +738,14 @@ def register_callbacks(app):
             }
 
             forceDark();
+            setTimeout(forceDark, 100);
+            setTimeout(forceDark, 300);
+            setTimeout(forceDark, 600);
 
             window._dpDarkObserver = new MutationObserver(function(mutations) {
                 forceDark();
+                setTimeout(forceDark, 50);
+                setTimeout(forceDark, 150);
             });
             window._dpDarkObserver.observe(document.body, {childList: true, subtree: true});
 
