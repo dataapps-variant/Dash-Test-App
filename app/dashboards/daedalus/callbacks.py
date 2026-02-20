@@ -109,13 +109,9 @@ def _pivot_grid(pivot_df, colors, grid_id):
             cd["pinned"] = "left"
             cd["width"] = 160
         else:
-            cd["width"] = 120
+            cd["width"] = 160
             cd["type"] = "rightAligned"
-            cd["valueFormatter"] = {"function": """
-                params.value != null ?
-                    (typeof params.value === 'number' ? '$ ' + params.value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : params.value)
-                    : ''
-            """}
+            cd["valueFormatter"] = {"function": "params.value != null ? (typeof params.value === 'number' ? '$ ' + params.value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : params.value) : ''"}
         col_defs.append(cd)
 
     return dag.AgGrid(
