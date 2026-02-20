@@ -254,7 +254,7 @@ def create_admin_panel_layout(user, theme="dark"):
             ], style={"fontSize": "12px", "color": "#5f6672", "marginTop": "2px"})
         ]),
         html.Div([
-            dbc.Button("🔔", id="admin-notifications-btn", color="link", style={
+            dbc.Button("🔄", id="admin-refresh-btn", color="link", n_clicks=0, style={
                 "width": "38px",
                 "height": "38px",
                 "display": "flex",
@@ -265,6 +265,19 @@ def create_admin_panel_layout(user, theme="dark"):
                 "color": "#9aa0ab",
                 "fontSize": "16px",
                 "padding": "0"
+            }),
+            dbc.Button("🔔", id="admin-notifications-btn", color="link", style={
+                "width": "38px",
+                "height": "38px",
+                "display": "flex",
+                "alignItems": "center",
+                "justifyContent": "center",
+                "borderRadius": "6px",
+                "border": "1px solid #2a2d36",
+                "color": "#9aa0ab",
+                "fontSize": "16px",
+                "padding": "0",
+                "marginLeft": "8px"
             }),
             dbc.Button("⬇", id="admin-export-btn", color="link", style={
                 "width": "38px",

@@ -91,6 +91,22 @@ def register_callbacks(app):
         prevent_initial_call=True
     )
 
+    # =========================================================================
+    # REFRESH BUTTON
+    # =========================================================================
+
+    @app.callback(
+        Output('admin-page-refresh-store', 'data', allow_duplicate=True),
+        Input('admin-refresh-btn', 'n_clicks'),
+        State('admin-page-refresh-store', 'data'),
+        prevent_initial_call=True
+    )
+    def handle_refresh_button(n_clicks, current_refresh):
+        """Handle refresh button click - triggers data reload"""
+        if n_clicks:
+            return (current_refresh or 0) + 1
+        return no_update
+
     # Update active nav item style
     @app.callback(
         Output('nav-users', 'style'),
