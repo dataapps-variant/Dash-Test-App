@@ -827,3 +827,41 @@ hr {
         padding: 1px 4px !important;
     }
 }
+
+/* =============================================================================
+   Dash dcc.Dropdown — fix white-on-white text in options list
+   ============================================================================= */
+.Select-menu-outer,
+.VirtualizedSelectFocusedOption,
+.VirtualizedSelectOption {
+    background-color: #111111 !important;
+    color: #FFFFFF !important;
+}
+
+.VirtualizedSelectOption:hover,
+.VirtualizedSelectFocusedOption {
+    background-color: #333333 !important;
+    color: #FFFFFF !important;
+}
+
+.Select-value-label {
+    color: #FFFFFF !important;
+}
+
+.Select-placeholder {
+    color: #999999 !important;
+}
+
+.Select-control {
+    background-color: #111111 !important;
+    border-color: #333333 !important;
+}
+
+.Select-input > input {
+    color: #FFFFFF !important;
+}
+
+.Select-clear-zone,
+.Select-arrow-zone {
+    color: #999999 !important;
+}
