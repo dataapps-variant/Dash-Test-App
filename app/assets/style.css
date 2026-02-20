@@ -487,10 +487,9 @@ body .CalendarDay__today {
 
 .ag-theme-alpine-dark .ag-cell,
 .ag-theme-alpine .ag-cell {
-    color: #FFFFFF !important;
+    color: #FFFFFF;
     border-right: 1px solid #0D0D0D !important;
 }
-
 .ag-theme-alpine-dark .ag-pinned-left-cols-container .ag-cell,
 .ag-theme-alpine .ag-pinned-left-cols-container .ag-cell {
     background-color: inherit !important;
