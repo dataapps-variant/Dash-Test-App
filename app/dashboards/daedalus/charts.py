@@ -396,26 +396,8 @@ def build_annotated_line(df, format_type="number", date_range=None, theme="dark"
     change_color = "#22C55E" if pct_change >= 0 else "#E74C3C"
     change_arrow = "↑" if pct_change >= 0 else "↓"
 
-    layout["annotations"] = [
-        dict(
-            text=f"{start_str} to {end_str}",
-            xref="paper", yref="paper", x=0.01, y=0.98,
-            showarrow=False,
-            font=dict(size=12, color=colors["text_primary"]),
-            xanchor="left", yanchor="top",
-        ),
-        dict(
-            text=f"{pct_change:+.2f}% {change_arrow}",
-            xref="paper", yref="paper", x=0.99, y=0.98,
-            showarrow=False,
-            font=dict(size=13, color=change_color, weight="bold"),
-            xanchor="right", yanchor="top",
-        ),
-    ]
-
     fig.update_layout(**layout)
-    return fig
-
+    return fig, start_val, end_val, pct_change
 
 def build_annotated_entity_lines(data_df, format_type="percent", date_range=None, theme="dark",
                                   value_col="value"):
@@ -469,20 +451,8 @@ def build_annotated_entity_lines(data_df, format_type="percent", date_range=None
         start_str = f"{start_val:,.0f}"
         end_str = f"{end_val:,.0f}"
 
-    change_color = "#22C55E" if pct_change >= 0 else "#E74C3C"
-    change_arrow = "↑" if pct_change >= 0 else "↓"
-    layout["annotations"] = [
-        dict(text=f"{start_str} to {end_str}", xref="paper", yref="paper",
-             x=0.01, y=0.98, showarrow=False,
-             font=dict(size=12, color=colors["text_primary"]), xanchor="left", yanchor="top"),
-        dict(text=f"{pct_change:+.2f}% {change_arrow}", xref="paper", yref="paper",
-             x=0.99, y=0.98, showarrow=False,
-             font=dict(size=13, color=change_color, weight="bold"), xanchor="right", yanchor="top"),
-    ]
-
     fig.update_layout(**layout)
-    return fig, apps
-
+    return fig, apps, start_val, end_val, pct_change
 
 def build_annotated_portfolio_line(df, format_type="percent", date_range=None, theme="dark",
                                     date_col="Date", value_col="value", name="Portfolio"):
@@ -519,16 +489,5 @@ def build_annotated_portfolio_line(df, format_type="percent", date_range=None, t
         start_str = f"{start_val:,.0f}"
         end_str = f"{end_val:,.0f}"
 
-    change_color = "#22C55E" if pct_change >= 0 else "#E74C3C"
-    change_arrow = "↑" if pct_change >= 0 else "↓"
-    layout["annotations"] = [
-        dict(text=f"{start_str} to {end_str}", xref="paper", yref="paper",
-             x=0.01, y=0.98, showarrow=False,
-             font=dict(size=12, color=colors["text_primary"]), xanchor="left", yanchor="top"),
-        dict(text=f"{pct_change:+.2f}% {change_arrow}", xref="paper", yref="paper",
-             x=0.99, y=0.98, showarrow=False,
-             font=dict(size=13, color=change_color, weight="bold"), xanchor="right", yanchor="top"),
-    ]
-
     fig.update_layout(**layout)
-    return fig
+    return fig, start_val, end_val, pct_change

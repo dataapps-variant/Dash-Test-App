@@ -65,6 +65,56 @@ def _section_title(text, colors):
     return html.H6(text, style={"color": colors["text_primary"], "marginBottom": "12px", "fontWeight": "600"})
 
 
+def _annotation_box(start_val, end_val, pct_change, format_type, colors):
+    """Build an HTML summary box showing Start | End | % Change"""
+    if format_type == "percent":
+        start_str = f"{start_val:.2%}"
+        end_str = f"{end_val:.2%}"
+    elif format_type == "dollar":
+        start_str = f"${start_val:,.0f}"
+        end_str = f"${end_val:,.0f}"
+    else:
+        start_str = f"{start_val:,.0f}"
+        end_str = f"{end_val:,.0f}"
+
+    change_color = "#22C55E" if pct_change >= 0 else "#E74C3C"
+    change_arrow = "↑" if pct_change >= 0 else "↓"
+    change_str = f"{pct_change:+.2f}% {change_arrow}"
+
+    item_style = {
+        "display": "inline-flex", "alignItems": "center", "gap": "6px",
+        "padding": "0 16px",
+    }
+    separator_style = {
+        "width": "1px", "height": "24px",
+        "backgroundColor": colors["border"], "display": "inline-block",
+    }
+
+    return html.Div([
+        html.Span([
+            html.Span("Start: ", style={"color": colors["text_secondary"], "fontSize": "12px"}),
+            html.Span(start_str, style={"color": colors["text_primary"], "fontSize": "13px", "fontWeight": "600"}),
+        ], style=item_style),
+        html.Span(style=separator_style),
+        html.Span([
+            html.Span("End: ", style={"color": colors["text_secondary"], "fontSize": "12px"}),
+            html.Span(end_str, style={"color": colors["text_primary"], "fontSize": "13px", "fontWeight": "600"}),
+        ], style=item_style),
+        html.Span(style=separator_style),
+        html.Span([
+            html.Span("Change: ", style={"color": colors["text_secondary"], "fontSize": "12px"}),
+            html.Span(change_str, style={"color": change_color, "fontSize": "13px", "fontWeight": "700"}),
+        ], style=item_style),
+    ], style={
+        "display": "inline-flex", "alignItems": "center",
+        "backgroundColor": colors["card_bg"],
+        "border": f"1px solid {colors['border']}",
+        "borderRadius": "6px",
+        "padding": "6px 4px",
+        "marginBottom": "10px",
+    })
+
+
 # =============================================================================
 # KPI CARD COMPONENT
 # =============================================================================
@@ -112,14 +162,16 @@ def _pivot_grid(pivot_df, colors, grid_id):
             cd["width"] = 160
             cd["type"] = "rightAligned"
             cd["valueFormatter"] = {"function": "params.value != null ? (typeof params.value === 'number' ? '$ ' + params.value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : params.value) : ''"}
+            cd["cellStyle"] = {"function": "var m = params.data && params.data.Metric || ''; if (m.indexOf('Delta') === -1 || params.value == null || typeof params.value !== 'number') return {}; if (m.indexOf('CAC') !== -1) return params.value < 0 ? {color: '#22C55E'} : params.value > 0 ? {color: '#E74C3C'} : {}; return params.value > 0 ? {color: '#22C55E'} : params.value < 0 ? {color: '#E74C3C'} : {};"}
         col_defs.append(cd)
-
+        
     return dag.AgGrid(
         id=grid_id,
         columnDefs=col_defs,
         rowData=pivot_df.to_dict("records"),
         defaultColDef={"resizable": True},
-        style={"height": "180px"},
+        dashGridOptions={"domLayout": "autoHeight"},
+        style={"width": "100%"},
         className="ag-theme-alpine-dark",
     )
 
@@ -426,7 +478,7 @@ def register_callbacks(app):
             for col in metric_cols:
                 if col in app_df.columns:
                     label = col.replace("_", " ")
-                    dash_style = "dot" if "T7D" in col else "solid"
+                    dash_style = "solid" if "T7D" in col else "dot"
                     color = "#06B6D4" if "Daily" in col else "#F97316"
                     fig.add_trace(go.Scatter(
                         x=app_df["Date"], y=app_df[col],
@@ -481,7 +533,7 @@ def register_callbacks(app):
 
         # Chart 1: Portfolio active subs
         portfolio_df = get_portfolio_active_subs(app_names, channels_int, start_date, end_date)
-        chart1 = build_annotated_line(portfolio_df, "number", theme=THEME,
+        chart1, c1_s, c1_e, c1_p = build_annotated_line(portfolio_df, "number", theme=THEME,
                                        value_col="Current_Active_Subscription",
                                        name="Current Active Subscriptions")
 
@@ -513,29 +565,30 @@ def register_callbacks(app):
 
         # Chart 5: Entity active subs (line per app)
         entity_subs_df = get_entity_active_subs(app_names, channels_int, start_date, end_date)
-        chart5, _ = build_annotated_entity_lines(entity_subs_df, "number", theme=THEME,
+        chart5, _, c5_s, c5_e, c5_p = build_annotated_entity_lines(entity_subs_df, "number", theme=THEME,
                                                   value_col="Current_Active_Subscription")
 
         # Charts 6-11: Ratio charts (entity + portfolio pairs)
         churn_entity = get_entity_churn(app_names, channels_int, start_date, end_date)
         churn_port = get_portfolio_churn(app_names, channels_int, start_date, end_date)
-        chart6, _ = build_annotated_entity_lines(churn_entity, "percent", theme=THEME)
-        chart7 = build_annotated_portfolio_line(churn_port, "percent", theme=THEME, name="Portfolio Churn Rate")
+        chart6, _, c6_s, c6_e, c6_p = build_annotated_entity_lines(churn_entity, "percent", theme=THEME)
+        chart7, c7_s, c7_e, c7_p = build_annotated_portfolio_line(churn_port, "percent", theme=THEME, name="Portfolio Churn Rate")
 
         ss_entity = get_entity_ss(app_names, channels_int, start_date, end_date)
         ss_port = get_portfolio_ss(app_names, channels_int, start_date, end_date)
-        chart8, _ = build_annotated_entity_lines(ss_entity, "percent", theme=THEME)
-        chart9 = build_annotated_portfolio_line(ss_port, "percent", theme=THEME, name="Portfolio SS Distribution")
+        chart8, _, c8_s, c8_e, c8_p = build_annotated_entity_lines(ss_entity, "percent", theme=THEME)
+        chart9, c9_s, c9_e, c9_p = build_annotated_portfolio_line(ss_port, "percent", theme=THEME, name="Portfolio SS Distribution")
 
         pend_entity = get_entity_pending(app_names, channels_int, start_date, end_date)
         pend_port = get_portfolio_pending(app_names, channels_int, start_date, end_date)
-        chart10, _ = build_annotated_entity_lines(pend_entity, "percent", theme=THEME)
-        chart11 = build_annotated_portfolio_line(pend_port, "percent", theme=THEME, name="Portfolio Pending Subs")
+        chart10, _, c10_s, c10_e, c10_p = build_annotated_entity_lines(pend_entity, "percent", theme=THEME)
+        chart11, c11_s, c11_e, c11_p = build_annotated_portfolio_line(pend_port, "percent", theme=THEME, name="Portfolio Pending Subs")
 
         return html.Div([
             # Chart 1
             html.Div([
                 _section_title("Historical Portfolio Current Active Subscriptions", colors),
+                _annotation_box(c1_s, c1_e, c1_p, "number", colors),
                 dcc.Graph(figure=chart1, config=CHART_CONFIG),
             ], style=_card_style(colors)),
 
@@ -560,36 +613,43 @@ def register_callbacks(app):
             # Chart 5
             html.Div([
                 _section_title("Historical Entity-by-Entity Current Active Subscriptions", colors),
+                _annotation_box(c5_s, c5_e, c5_p, "number", colors),
                 dcc.Graph(figure=chart5, config=CHART_CONFIG),
             ], style=_card_style(colors)),
 
             # Charts 6-7
             html.Div([
                 _section_title("Historical Daily T30D Entity-by-Entity Churn Rate", colors),
+                _annotation_box(c6_s, c6_e, c6_p, "percent", colors),
                 dcc.Graph(figure=chart6, config=CHART_CONFIG),
             ], style=_card_style(colors)),
             html.Div([
                 _section_title("Historical Daily T30D Portfolio Churn Rate", colors),
+                _annotation_box(c7_s, c7_e, c7_p, "percent", colors),
                 dcc.Graph(figure=chart7, config=CHART_CONFIG),
             ], style=_card_style(colors)),
 
             # Charts 8-9
             html.Div([
                 _section_title("Historical Daily T30D Entity-by-Entity SS Distribution", colors),
+                _annotation_box(c8_s, c8_e, c8_p, "percent", colors),
                 dcc.Graph(figure=chart8, config=CHART_CONFIG),
             ], style=_card_style(colors)),
             html.Div([
                 _section_title("Historical Daily T30D Portfolio SS Distribution", colors),
+                _annotation_box(c9_s, c9_e, c9_p, "percent", colors),
                 dcc.Graph(figure=chart9, config=CHART_CONFIG),
             ], style=_card_style(colors)),
 
             # Charts 10-11
             html.Div([
                 _section_title("Historical Daily T30D Entity-by-Entity Pending Subscriptions", colors),
+                _annotation_box(c10_s, c10_e, c10_p, "percent", colors),
                 dcc.Graph(figure=chart10, config=CHART_CONFIG),
             ], style=_card_style(colors)),
             html.Div([
                 _section_title("Historical Daily T30D Portfolio Pending Subscriptions", colors),
+                _annotation_box(c11_s, c11_e, c11_p, "percent", colors),
                 dcc.Graph(figure=chart11, config=CHART_CONFIG),
             ], style=_card_style(colors)),
         ])
@@ -680,62 +740,81 @@ def register_callbacks(app):
         return ""
 
     # -----------------------------------------------------------------
-    # DATEPICKER DARK THEME OVERRIDE
+    # DATEPICKER DARK THEME OVERRIDE (MutationObserver approach)
     # -----------------------------------------------------------------
     app.clientside_callback(
         """
         function(tab) {
-            var style = document.getElementById('datepicker-dark-override');
-            if (!style) {
-                style = document.createElement('style');
-                style.id = 'datepicker-dark-override';
-                style.textContent = `
-                    .DateInput, .DateInput input, [class*="DateInput"] input,
-                    .SingleDatePickerInput, [class*="SingleDatePickerInput"] {
-                        background-color: #111111 !important;
-                        color: #FFFFFF !important;
-                        border-color: #333333 !important;
-                    }
-                    .SingleDatePicker_picker, [class*="SingleDatePicker_picker"] {
-                        background-color: #111111 !important;
-                    }
-                    .DayPicker, [class*="DayPicker_"], [class*="DayPicker__"],
-                    .DayPicker_transitionContainer, .CalendarMonthGrid,
-                    .CalendarMonth, [class*="CalendarMonth_"] {
-                        background-color: #111111 !important;
-                    }
-                    .CalendarDay__default, [class*="CalendarDay__default"] {
-                        background-color: #111111 !important;
-                        color: #FFFFFF !important;
-                        border: 1px solid #222222 !important;
-                    }
-                    .CalendarDay__default:hover {
-                        background-color: #333333 !important;
-                    }
-                    .CalendarDay__selected, [class*="CalendarDay__selected"] {
-                        background-color: #FFFFFF !important;
-                        color: #000000 !important;
-                        border: 1px solid #FFFFFF !important;
-                    }
-                    .CalendarDay__blocked_out_of_range, [class*="CalendarDay__blocked"] {
-                        color: #333333 !important;
-                        background-color: #111111 !important;
-                    }
-                    .DayPicker_weekHeader small { color: #999999 !important; }
-                    .CalendarMonth_caption, .CalendarMonth_caption strong { color: #FFFFFF !important; }
-                    [class*="DateInput_fang"], [class*="DayPickerKeyboardShortcuts"] { display: none !important; }
-                    [class*="DayPickerNavigation_button"] { background-color: #1A1A1A !important; border: 1px solid #333333 !important; }
-                    [class*="DayPickerNavigation_svg"] { fill: #FFFFFF !important; }
-                `;
-                document.head.appendChild(style);
+            if (window._dpDarkObserver) return window.dash_clientside.no_update;
+
+            function forceDark() {
+                document.querySelectorAll('.DateInput, .DateInput_1').forEach(function(el) {
+                    el.style.setProperty('background-color', '#111111', 'important');
+                });
+                document.querySelectorAll('.DateInput_input, .DateInput_input_1').forEach(function(el) {
+                    el.style.setProperty('background-color', '#111111', 'important');
+                    el.style.setProperty('color', '#FFFFFF', 'important');
+                    el.style.setProperty('border-color', '#333333', 'important');
+                });
+                document.querySelectorAll('.SingleDatePickerInput, .SingleDatePickerInput_1').forEach(function(el) {
+                    el.style.setProperty('background-color', '#111111', 'important');
+                    el.style.setProperty('border', 'none', 'important');
+                });
+                document.querySelectorAll('.SingleDatePicker_picker').forEach(function(el) {
+                    el.style.setProperty('background-color', '#111111', 'important');
+                });
+                document.querySelectorAll('.DayPicker, .DayPicker_transitionContainer, .CalendarMonthGrid, .CalendarMonth').forEach(function(el) {
+                    el.style.setProperty('background', '#111111', 'important');
+                });
+                document.querySelectorAll('.CalendarDay__default').forEach(function(el) {
+                    el.style.setProperty('background-color', '#111111', 'important');
+                    el.style.setProperty('color', '#FFFFFF', 'important');
+                    el.style.setProperty('border', '1px solid #222222', 'important');
+                });
+                document.querySelectorAll('.CalendarDay__selected').forEach(function(el) {
+                    el.style.setProperty('background-color', '#FFFFFF', 'important');
+                    el.style.setProperty('color', '#000000', 'important');
+                });
+                document.querySelectorAll('.CalendarDay__blocked_out_of_range').forEach(function(el) {
+                    el.style.setProperty('color', '#333333', 'important');
+                    el.style.setProperty('background-color', '#111111', 'important');
+                });
+                document.querySelectorAll('.CalendarMonth_caption').forEach(function(el) {
+                    el.style.setProperty('color', '#FFFFFF', 'important');
+                });
+                document.querySelectorAll('.DayPicker_weekHeader small').forEach(function(el) {
+                    el.style.setProperty('color', '#999999', 'important');
+                });
+                document.querySelectorAll('.DayPickerNavigation_button').forEach(function(el) {
+                    el.style.setProperty('background-color', '#1A1A1A', 'important');
+                    el.style.setProperty('border', '1px solid #333333', 'important');
+                });
+                document.querySelectorAll('.DayPickerNavigation_svg__horizontal').forEach(function(el) {
+                    el.style.setProperty('fill', '#FFFFFF', 'important');
+                });
+                document.querySelectorAll('.DateInput_fang, .DayPickerKeyboardShortcuts_buttonReset').forEach(function(el) {
+                    el.style.setProperty('display', 'none', 'important');
+                });
             }
+
+            forceDark();
+            setTimeout(forceDark, 100);
+            setTimeout(forceDark, 300);
+            setTimeout(forceDark, 600);
+
+            window._dpDarkObserver = new MutationObserver(function(mutations) {
+                forceDark();
+                setTimeout(forceDark, 50);
+                setTimeout(forceDark, 150);
+            });
+            window._dpDarkObserver.observe(document.body, {childList: true, subtree: true});
+
             return window.dash_clientside.no_update;
         }
         """,
         Output('daedalus-dashboard-tabs', 'className'),
         Input('daedalus-dashboard-tabs', 'active_tab')
     )
-
     # -----------------------------------------------------------------
     # SELECT ALL SYNC CALLBACKS
     # -----------------------------------------------------------------
