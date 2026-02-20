@@ -142,21 +142,11 @@ def create_daedalus_layout(user, theme="dark"):
         ], className="mb-2", align="center"),
 
         # =================================================================
-        # REFRESH SECTION — right-aligned
+        # LAST REFRESH TIMESTAMPS (no buttons)
         # =================================================================
         html.Div([
-            dbc.Button("Refresh BQ", id="daedalus-refresh-bq-btn", size="sm",
-                       className="refresh-btn-green"),
-            html.Small(f"  Last: {cache_info.get('last_bq_refresh', '--')}  ",
-                       id="daedalus-bq-timestamp",
-                       style={"color": colors["text_secondary"], "margin": "0 16px 0 8px"}),
-            dbc.Button("Refresh GCS", id="daedalus-refresh-gcs-btn", size="sm",
-                       className="refresh-btn-green"),
-            html.Small(f"  Last: {cache_info.get('last_gcs_refresh', '--')}",
-                       id="daedalus-gcs-timestamp",
-                       style={"color": colors["text_secondary"], "marginLeft": "8px"}),
-            html.Div(id="daedalus-refresh-status",
-                     style={"display": "inline-block", "marginLeft": "16px"})
+            html.Small(f"Last BQ Refresh: {cache_info.get('last_bq_refresh', '--')}  |  ", style={"color": colors["text_secondary"]}),
+            html.Small(f"Last GCS Refresh: {cache_info.get('last_gcs_refresh', '--')}", style={"color": colors["text_secondary"]}),
         ], style={"textAlign": "right", "padding": "6px 0", "marginBottom": "8px"}),
 
         # =================================================================

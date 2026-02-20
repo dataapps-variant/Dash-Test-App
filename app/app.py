@@ -71,6 +71,63 @@ def health_check():
     """Simple health check that doesn't trigger data loading"""
     return {'status': 'healthy'}, 200
 
+
+# =============================================================================
+# SCHEDULED REFRESH API ENDPOINTS (for Cloud Scheduler)
+# =============================================================================
+
+@server.route('/api/refresh-bq', methods=['POST'])
+def api_refresh_bq():
+    """API endpoint for scheduled BQ refresh - called by Cloud Scheduler"""
+    # Verify request is from Cloud Scheduler (check header)
+    if request.headers.get('X-CloudScheduler') != 'true':
+        # Optional: Add API key check for extra security
+        api_key = request.headers.get('X-API-Key')
+        if api_key != os.environ.get('SCHEDULER_API_KEY', 'your-secret-key'):
+            return {'error': 'Unauthorized'}, 401
+
+    try:
+        from app.bigquery_client import refresh_bq_to_staging
+        from app.dashboards.all_metrics_merged.data import refresh_merged_bq_to_staging
+
+        success1, msg1 = refresh_bq_to_staging()
+        success2, msg2 = refresh_merged_bq_to_staging()
+
+        return {
+            'status': 'success' if (success1 and success2) else 'partial',
+            'icarus': msg1,
+            'merged': msg2,
+            'timestamp': datetime.now().isoformat()
+        }, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
+@server.route('/api/refresh-gcs', methods=['POST'])
+def api_refresh_gcs():
+    """API endpoint for scheduled GCS refresh - called by Cloud Scheduler"""
+    if request.headers.get('X-CloudScheduler') != 'true':
+        api_key = request.headers.get('X-API-Key')
+        if api_key != os.environ.get('SCHEDULER_API_KEY', 'your-secret-key'):
+            return {'error': 'Unauthorized'}, 401
+
+    try:
+        from app.bigquery_client import refresh_gcs_from_staging
+        from app.dashboards.all_metrics_merged.data import refresh_merged_gcs_from_staging
+
+        success1, msg1 = refresh_gcs_from_staging()
+        success2, msg2 = refresh_merged_gcs_from_staging()
+
+        return {
+            'status': 'success' if (success1 and success2) else 'partial',
+            'icarus': msg1,
+            'merged': msg2,
+            'timestamp': datetime.now().isoformat()
+        }, 200
+    except Exception as e:
+        return {'error': str(e)}, 500
+
+
 # Create Dash app
 app = Dash(
     __name__,
@@ -309,39 +366,17 @@ def create_landing_layout(user, theme="dark"):
             )
             row_style = {"opacity": "0.5"}
         
-        # BQ cell: button + timestamp
-        bq_cell = html.Td([
-            dbc.Button(
-                "Refresh BQ",
-                id={"type": "landing-refresh-bq", "index": dash_id},
-                size="sm",
-                className="refresh-btn-green me-2",
-                disabled=not is_enabled,
-                style={"fontSize": "11px", "padding": "2px 10px"}
-            ),
-            html.Span(
-                bq_display,
-                id={"type": "landing-bq-timestamp", "index": dash_id},
-                style={"color": colors["text_secondary"], "fontSize": "13px"}
-            )
-        ])
-        
-        # GCS cell: button + timestamp
-        gcs_cell = html.Td([
-            dbc.Button(
-                "Refresh GCS",
-                id={"type": "landing-refresh-gcs", "index": dash_id},
-                size="sm",
-                className="refresh-btn-green me-2",
-                disabled=not is_enabled,
-                style={"fontSize": "11px", "padding": "2px 10px"}
-            ),
-            html.Span(
-                gcs_display,
-                id={"type": "landing-gcs-timestamp", "index": dash_id},
-                style={"color": colors["text_secondary"], "fontSize": "13px"}
-            )
-        ])
+        # BQ cell: timestamp only (no button)
+        bq_cell = html.Td(
+            bq_display,
+            style={"color": colors["text_secondary"], "fontSize": "13px"}
+        )
+
+        # GCS cell: timestamp only (no button)
+        gcs_cell = html.Td(
+            gcs_display,
+            style={"color": colors["text_secondary"], "fontSize": "13px"}
+        )
         
         table_rows.append(
             html.Tr([
@@ -576,149 +611,6 @@ def navigate_back(back_click):
     return no_update
 
 
-# =============================================================================
-# SHARED CALLBACKS (used by both dashboards)
-# =============================================================================
-# =============================================================================
-# LANDING PAGE REFRESH CALLBACKS
-# =============================================================================
-
-@callback(
-    Output("landing-refresh-status", "children"),
-    Output({"type": "landing-bq-timestamp", "index": ALL}, "children"),
-    Input({"type": "landing-refresh-bq", "index": ALL}, "n_clicks"),
-    prevent_initial_call=True
-)
-def handle_landing_bq_refresh(all_clicks):
-    """Handle per-dashboard BQ refresh from landing page"""
-    if not any(c for c in all_clicks if c):
-        return no_update, no_update
-    
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
-        return no_update, no_update
-    
-    dash_id = triggered.get("index", "")
-    
-    # Determine which refresh function to call
-    if dash_id in ("icarus_historical", "icarus_multi"):
-        success, msg = refresh_bq_to_staging()
-    elif dash_id == "all_metrics_merged":
-        from app.dashboards.all_metrics_merged.data import refresh_merged_bq_to_staging
-        success, msg = refresh_merged_bq_to_staging()
-    else:
-        return dbc.Alert("No refresh available for this dashboard.", color="warning", dismissable=True), no_update
-    
-    # Build updated timestamps for ALL dashboard rows
-    if success:
-        # Re-fetch timestamps
-        new_cache_info = get_cache_info()
-        new_merged_info = get_merged_cache_info()
-        
-        # Build timestamp list in same order as DASHBOARDS
-        new_timestamps = []
-        for d in DASHBOARDS:
-            did = d["id"]
-            if did in ("icarus_historical", "icarus_multi"):
-                new_timestamps.append(new_cache_info.get("last_bq_refresh", "--"))
-            elif did == "all_metrics_merged":
-                new_timestamps.append(new_merged_info.get("last_bq_refresh", "--"))
-            else:
-                new_timestamps.append("--")
-        
-        return dbc.Alert(msg, color="success", dismissable=True), new_timestamps
-    else:
-        return dbc.Alert(msg, color="danger", dismissable=True), no_update
-
-
-@callback(
-    Output("landing-refresh-status", "children", allow_duplicate=True),
-    Output({"type": "landing-gcs-timestamp", "index": ALL}, "children"),
-    Input({"type": "landing-refresh-gcs", "index": ALL}, "n_clicks"),
-    prevent_initial_call=True
-)
-def handle_landing_gcs_refresh(all_clicks):
-    """Handle per-dashboard GCS refresh from landing page"""
-    if not any(c for c in all_clicks if c):
-        return no_update, no_update
-    
-    triggered = ctx.triggered_id
-    if not isinstance(triggered, dict):
-        return no_update, no_update
-    
-    dash_id = triggered.get("index", "")
-    
-    # Determine which refresh function to call
-    if dash_id in ("icarus_historical", "icarus_multi"):
-        success, msg = refresh_gcs_from_staging()
-    elif dash_id == "all_metrics_merged":
-        from app.dashboards.all_metrics_merged.data import refresh_merged_gcs_from_staging
-        success, msg = refresh_merged_gcs_from_staging()
-    else:
-        return dbc.Alert("No refresh available for this dashboard.", color="warning", dismissable=True), no_update
-    
-    # Build updated timestamps for ALL dashboard rows
-    if success:
-        # Re-fetch timestamps
-        new_cache_info = get_cache_info()
-        new_merged_info = get_merged_cache_info()
-        
-        # Build timestamp list in same order as DASHBOARDS
-        new_timestamps = []
-        for d in DASHBOARDS:
-            did = d["id"]
-            if did in ("icarus_historical", "icarus_multi"):
-                new_timestamps.append(new_cache_info.get("last_gcs_refresh", "--"))
-            elif did == "all_metrics_merged":
-                new_timestamps.append(new_merged_info.get("last_gcs_refresh", "--"))
-            else:
-                new_timestamps.append("--")
-        
-        return dbc.Alert(msg, color="success", dismissable=True), new_timestamps
-    else:
-        return dbc.Alert(msg, color="danger", dismissable=True), no_update
-@callback(
-    Output('refresh-status', 'children'),
-    Input('refresh-bq-btn', 'n_clicks'),
-    Input('refresh-gcs-btn', 'n_clicks'),
-    prevent_initial_call=True
-)
-def handle_refresh(bq_clicks, gcs_clicks):
-    """Handle data refresh for ALL dashboards"""
-    if not ctx.triggered_id:
-        return no_update
-    
-    if ctx.triggered_id == "refresh-bq-btn":
-        # Refresh ICARUS
-        success1, msg1 = refresh_bq_to_staging()
-        # Refresh Merged tables
-        from app.dashboards.all_metrics_merged.data import refresh_merged_bq_to_staging
-        success2, msg2 = refresh_merged_bq_to_staging()
-        
-        if success1 and success2:
-            return dbc.Alert(f"{msg1} | {msg2}", color="success", dismissable=True)
-        else:
-            errors = []
-            if not success1: errors.append(msg1)
-            if not success2: errors.append(msg2)
-            return dbc.Alert(f"Partial failure: {' | '.join(errors)}", color="warning", dismissable=True)
-    
-    elif ctx.triggered_id == "refresh-gcs-btn":
-        # Refresh ICARUS
-        success1, msg1 = refresh_gcs_from_staging()
-        # Refresh Merged tables
-        from app.dashboards.all_metrics_merged.data import refresh_merged_gcs_from_staging
-        success2, msg2 = refresh_merged_gcs_from_staging()
-        
-        if success1 and success2:
-            return dbc.Alert(f"{msg1} | {msg2}", color="success", dismissable=True)
-        else:
-            errors = []
-            if not success1: errors.append(msg1)
-            if not success2: errors.append(msg2)
-            return dbc.Alert(f"Partial failure: {' | '.join(errors)}", color="warning", dismissable=True)
-    
-    return no_update
 @callback(
     Output("page-store", "data", allow_duplicate=True),
     Input("nav-btn-daedalus", "n_clicks"),
