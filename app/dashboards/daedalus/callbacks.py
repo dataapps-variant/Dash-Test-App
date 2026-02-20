@@ -432,7 +432,10 @@ def register_callbacks(app):
                 _section_title("Monthly Spend Pacing VG (Portfolio)", colors),
                 dbc.Row([
                     dbc.Col(dcc.Graph(figure=spend_fig, config=CHART_CONFIG), width=6),
-                    dbc.Col(dcc.Graph(figure=users_fig, config=CHART_CONFIG), width=6),
+                    dbc.Col([
+                        html.H6("Monthly Users Pacing VG", style={"color": colors["text_secondary"], "fontSize": "13px", "marginBottom": "4px"}),
+                        dcc.Graph(figure=users_fig, config=CHART_CONFIG),
+                    ], width=6),
                 ]),
             ], style=_card_style(colors)))
 
@@ -450,7 +453,10 @@ def register_callbacks(app):
                 _section_title(f"Monthly Pacing {app_name}", colors),
                 dbc.Row([
                     dbc.Col(dcc.Graph(figure=spend_fig, config=CHART_CONFIG), width=6),
-                    dbc.Col(dcc.Graph(figure=users_fig, config=CHART_CONFIG), width=6),
+                    dbc.Col([
+                        html.H6(f"Monthly Users Pacing {app_name}", style={"color": colors["text_secondary"], "fontSize": "13px", "marginBottom": "4px"}),
+                        dcc.Graph(figure=users_fig, config=CHART_CONFIG),
+                    ], width=6),
                 ]),
             ], style=_card_style(colors)))
 
