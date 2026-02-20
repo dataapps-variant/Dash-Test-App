@@ -563,7 +563,9 @@ def get_current_subs_pivot(app_names, channels, start_date, end_date):
         for _, drow in daily.iterrows():
             date_str = drow["Date"].strftime("%Y-%m-%d")
             val = drow[col]
-            if fmt == "pct":
+            if pd.isna(val):
+                row[date_str] = "--"
+            elif fmt == "pct":
                 row[date_str] = f"{val:.2f}%"
             else:
                 row[date_str] = f"{int(val):,}"
