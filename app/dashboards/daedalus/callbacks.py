@@ -839,6 +839,49 @@ def register_callbacks(app):
                     [class*="DateInput_fang"], [class*="DayPickerKeyboardShortcuts"] { display: none !important; }
                     [class*="DayPickerNavigation_button"] { background-color: #1A1A1A !important; border: 1px solid #333333 !important; }
                     [class*="DayPickerNavigation_svg"] { fill: #FFFFFF !important; }
+
+                    /* dcc.Dropdown dark theme */
+                    .Select-control {
+                        background-color: #111111 !important;
+                        border-color: #333333 !important;
+                        color: #FFFFFF !important;
+                    }
+                    .Select-value-label, .Select-placeholder {
+                        color: #FFFFFF !important;
+                    }
+                    .Select-input > input {
+                        background-color: #111111 !important;
+                        color: #FFFFFF !important;
+                    }
+                    .Select-menu-outer {
+                        background-color: #111111 !important;
+                        border: 1px solid #333333 !important;
+                    }
+                    .Select-menu {
+                        background-color: #111111 !important;
+                    }
+                    .Select-option, .VirtualizedSelectOption {
+                        background-color: #111111 !important;
+                        color: #FFFFFF !important;
+                    }
+                    .Select-option:hover, .VirtualizedSelectOption:hover,
+                    .Select-option.is-focused, .VirtualizedSelectFocusedOption {
+                        background-color: #333333 !important;
+                        color: #FFFFFF !important;
+                    }
+                    .Select-option.is-selected, .VirtualizedSelectSelectedOption {
+                        background-color: #222222 !important;
+                        color: #FFFFFF !important;
+                    }
+                    .Select-arrow-zone .Select-arrow {
+                        border-top-color: #FFFFFF !important;
+                    }
+                    .Select-clear-zone { color: #999999 !important; }
+                    .Select.is-open > .Select-control { background-color: #111111 !important; }
+                    .Select-noresults {
+                        background-color: #111111 !important;
+                        color: #999999 !important;
+                    }
                 `;
                 document.head.appendChild(style);
             }
