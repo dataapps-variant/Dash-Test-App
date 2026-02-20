@@ -105,7 +105,11 @@ def _base_layout(colors, format_type="dollar", date_range=None):
             tickfont=dict(color=colors["text_secondary"]),
             tickprefix=yprefix, tickformat=yformat, fixedrange=False,
         ),
-        legend=dict(font=dict(color=colors["text_primary"]), bgcolor="rgba(0,0,0,0)"),
+        legend=dict(
+            font=dict(color=colors["text_primary"], size=10),
+            bgcolor="rgba(0,0,0,0)",
+            orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
+        ),
         dragmode="zoom",
     )
 
@@ -164,6 +168,7 @@ def build_actual_target_lines(df, actual_label, target_label, format_type="dolla
 
     layout = _base_layout(colors, format_type, date_range)
     layout["showlegend"] = True
+    layout["margin"] = dict(l=60, r=20, t=40, b=50)
     fig.update_layout(**layout)
     return fig
 
@@ -209,11 +214,7 @@ def build_multi_app_lines(df, actual_label, target_label, format_type="dollar", 
 
     layout = _base_layout(colors, format_type, date_range)
     layout["showlegend"] = True
-    layout["legend"] = dict(
-        font=dict(color=colors["text_primary"], size=10),
-        bgcolor="rgba(0,0,0,0)",
-        orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
-    )
+    layout["margin"] = dict(l=60, r=20, t=40, b=50)
     fig.update_layout(**layout)
     return fig, apps
 
@@ -354,11 +355,7 @@ def build_entity_lines(data_df, format_type="dollar", date_range=None, theme="da
 
     layout = _base_layout(colors, format_type, date_range)
     layout["showlegend"] = True
-    layout["legend"] = dict(
-        font=dict(color=colors["text_primary"], size=10),
-        bgcolor="rgba(0,0,0,0)",
-        orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
-    )
+    layout["margin"] = dict(l=60, r=20, t=40, b=50)
     fig.update_layout(**layout)
     return fig, apps
 
@@ -462,11 +459,7 @@ def build_annotated_entity_lines(data_df, format_type="percent", date_range=None
 
     layout = _base_layout(colors, format_type, date_range)
     layout["showlegend"] = True
-    layout["legend"] = dict(
-        font=dict(color=colors["text_primary"], size=10),
-        bgcolor="rgba(0,0,0,0)",
-        orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0,
-    )
+    layout["margin"] = dict(l=60, r=20, t=40, b=50)
 
     # Annotations
     if format_type == "percent":
