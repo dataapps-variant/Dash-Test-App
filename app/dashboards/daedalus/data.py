@@ -528,17 +528,17 @@ def get_current_subs_pivot(app_names, channels, start_date, end_date):
     daily["Churn_Rate_Pct"] = np.where(
         daily["Active_Subscription_30_Days_Ago"] > 0,
         (daily["Total_Lost_Subscriptions"] / daily["Active_Subscription_30_Days_Ago"] * 100).round(2),
-        np.nan
+        0
     )
     daily["Pending_Subscriptions_Pct"] = np.where(
         daily["Current_Active_Subscription"] > 0,
         (daily["Current_Pending_Subscriptions"] / daily["Current_Active_Subscription"] * 100).round(2),
-        np.nan
+        0
     )
     daily["SS_Orders_Pct"] = np.where(
         daily["T30_Day_New_Subscriptions"] > 0,
         (daily["T30_Day_New_SS_Orders"] / daily["T30_Day_New_Subscriptions"] * 100).round(2),
-        np.nan
+        0
     )
 
     # Build rows (metric per row, date per column)
@@ -563,9 +563,7 @@ def get_current_subs_pivot(app_names, channels, start_date, end_date):
         for _, drow in daily.iterrows():
             date_str = drow["Date"].strftime("%Y-%m-%d")
             val = drow[col]
-            if pd.isna(val):
-                row[date_str] = "--"
-            elif fmt == "pct":
+            if fmt == "pct":
                 row[date_str] = f"{val:.2f}%"
             else:
                 row[date_str] = f"{int(val):,}"
@@ -655,7 +653,7 @@ def _ratio_by_entity(app_names, channels, start_date, end_date, numerator, denom
         num=(numerator, "sum"),
         den=(denominator, "sum"),
     )
-    grouped["value"] = np.where(grouped["den"] > 0, grouped["num"] / grouped["den"], np.nan)
+    grouped["value"] = np.where(grouped["den"] > 0, grouped["num"] / grouped["den"], 0)
     return grouped[["App_Name", "Date", "value"]].sort_values(["App_Name", "Date"])
 
 
@@ -679,7 +677,7 @@ def _ratio_portfolio(app_names, channels, start_date, end_date, numerator, denom
         num=(numerator, "sum"),
         den=(denominator, "sum"),
     )
-    grouped["value"] = np.where(grouped["den"] > 0, grouped["num"] / grouped["den"], np.nan)
+    grouped["value"] = np.where(grouped["den"] > 0, grouped["num"] / grouped["den"], 0)
     return grouped[["Date", "value"]].sort_values("Date")
 
 
