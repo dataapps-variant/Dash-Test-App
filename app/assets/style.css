@@ -550,6 +550,15 @@ body .CalendarDay__today {
     border-top: 1px solid #1C1C1C !important;
 }
 
+/* Delta row coloring — green/red for positive/negative values */
+.ag-cell-green {
+    color: #22C55E !important;
+}
+
+.ag-cell-red {
+    color: #E74C3C !important;
+}
+
 /* Ensure no white backgrounds leak through */
 .container-fluid, .container, .row, .col {
     background-color: transparent !important;
