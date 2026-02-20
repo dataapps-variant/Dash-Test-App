@@ -146,7 +146,7 @@ def build_actual_target_lines(df, actual_label, target_label, format_type="dolla
     """
     colors = get_theme_colors(theme)
     if df is None or df.empty:
-        return _empty_figure(colors)
+        return _empty_figure(colors), 0, 0, 0
 
     fig = go.Figure()
     fig.add_trace(go.Scatter(
@@ -336,7 +336,7 @@ def build_entity_lines(data_df, format_type="dollar", date_range=None, theme="da
     """
     colors = get_theme_colors(theme)
     if data_df is None or data_df.empty:
-        return _empty_figure(colors), []
+        return _empty_figure(colors), [], 0, 0, 0
 
     apps = sorted(data_df["App_Name"].unique())
     cmap = _entity_color_map(apps)
@@ -383,7 +383,7 @@ def build_annotated_line(df, format_type="number", date_range=None, theme="dark"
     """
     colors = get_theme_colors(theme)
     if df is None or df.empty:
-        return _empty_figure(colors)
+        return _empty_figure(colors), 0, 0, 0
 
     df = df.sort_values(date_col)
     start_val = df[value_col].iloc[0]
