@@ -316,7 +316,7 @@ def create_landing_layout(user, theme="dark"):
                 id={"type": "landing-refresh-bq", "index": dash_id},
                 size="sm",
                 className="refresh-btn-green me-2",
-                disabled=not is_enabled,
+                disabled=not show_admin or not is_enabled,
                 style={"fontSize": "11px", "padding": "2px 10px"}
             ),
             html.Span(
@@ -333,7 +333,7 @@ def create_landing_layout(user, theme="dark"):
                 id={"type": "landing-refresh-gcs", "index": dash_id},
                 size="sm",
                 className="refresh-btn-green me-2",
-                disabled=not is_enabled,
+                disabled=not show_admin or not is_enabled,
                 style={"fontSize": "11px", "padding": "2px 10px"}
             ),
             html.Span(
