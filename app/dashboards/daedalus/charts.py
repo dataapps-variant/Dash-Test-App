@@ -193,24 +193,32 @@ def build_multi_app_lines(df, actual_label, target_label, format_type="dollar", 
         adf = df[df["App_Name"] == app].sort_values("Date")
         color = cmap.get(app, "#6B7280")
 
+        # Skip if all values are null
+        if adf["actual"].dropna().empty and adf["target"].dropna().empty:
+            continue
+
         # Actual (solid)
-        fig.add_trace(go.Scatter(
-            x=adf["Date"], y=adf["actual"],
-            mode="lines", name=f"{actual_label}, {app}",
-            line=dict(color=color, width=LINE_WIDTH),
-            hovertemplate=f'{actual_label}, {app}  $%{{y:,.0f}}<extra></extra>' if format_type == "dollar"
-                else f'{actual_label}, {app}  %{{y:,.0f}}<extra></extra>',
-            showlegend=True,
-        ))
+        if not adf["actual"].dropna().empty:
+            fig.add_trace(go.Scatter(
+                x=adf["Date"], y=adf["actual"],
+                mode="lines", name=f"{actual_label}, {app}",
+                line=dict(color=color, width=LINE_WIDTH),
+                connectgaps=False,
+                hovertemplate=f'{actual_label}, {app}  $%{{y:,.0f}}<extra></extra>' if format_type == "dollar"
+                    else f'{actual_label}, {app}  %{{y:,.0f}}<extra></extra>',
+                showlegend=True,
+            ))
         # Target (dotted)
-        fig.add_trace(go.Scatter(
-            x=adf["Date"], y=adf["target"],
-            mode="lines", name=f"{target_label}, {app}",
-            line=dict(color=color, width=LINE_WIDTH, dash="dot"),
-            hovertemplate=f'{target_label}, {app}  $%{{y:,.0f}}<extra></extra>' if format_type == "dollar"
-                else f'{target_label}, {app}  %{{y:,.0f}}<extra></extra>',
-            showlegend=True,
-        ))
+        if not adf["target"].dropna().empty:
+            fig.add_trace(go.Scatter(
+                x=adf["Date"], y=adf["target"],
+                mode="lines", name=f"{target_label}, {app}",
+                line=dict(color=color, width=LINE_WIDTH, dash="dot"),
+                connectgaps=False,
+                hovertemplate=f'{target_label}, {app}  $%{{y:,.0f}}<extra></extra>' if format_type == "dollar"
+                    else f'{target_label}, {app}  %{{y:,.0f}}<extra></extra>',
+                showlegend=True,
+            ))
 
     layout = _base_layout(colors, format_type, date_range)
     layout["showlegend"] = True
@@ -336,6 +344,8 @@ def build_entity_lines(data_df, format_type="dollar", date_range=None, theme="da
     fig = go.Figure()
     for app in apps:
         adf = data_df[data_df["App_Name"] == app].sort_values("Date")
+        if adf[value_col].dropna().empty:
+            continue
         color = cmap.get(app, "#6B7280")
 
         if format_type == "dollar":
@@ -349,6 +359,7 @@ def build_entity_lines(data_df, format_type="dollar", date_range=None, theme="da
             x=adf["Date"], y=adf[value_col],
             mode="lines", name=app,
             line=dict(color=color, width=LINE_WIDTH),
+            connectgaps=False,
             hovertemplate=ht,
             showlegend=True,
         ))
@@ -424,6 +435,8 @@ def build_annotated_entity_lines(data_df, format_type="percent", date_range=None
     fig = go.Figure()
     for app in apps:
         adf = data_df[data_df["App_Name"] == app].sort_values("Date")
+        if adf[value_col].dropna().empty:
+            continue
         color = cmap.get(app, "#6B7280")
 
         if format_type == "percent":
@@ -435,6 +448,7 @@ def build_annotated_entity_lines(data_df, format_type="percent", date_range=None
             x=adf["Date"], y=adf[value_col],
             mode="lines", name=app,
             line=dict(color=color, width=LINE_WIDTH),
+            connectgaps=False,
             hovertemplate=ht,
             showlegend=True,
         ))
@@ -476,6 +490,7 @@ def build_annotated_portfolio_line(df, format_type="percent", date_range=None, t
         x=df[date_col], y=df[value_col],
         mode="lines", name=name,
         line=dict(color=ACTUAL_COLOR, width=LINE_WIDTH),
+        connectgaps=False,
         hovertemplate=ht,
         showlegend=False,
     ))
