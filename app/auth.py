@@ -29,6 +29,9 @@ _users_cache = {
     "loaded_at": None
 }
 
+# In-memory session storage fallback (used when GCS is not available)
+_memory_sessions = {}
+
 # =============================================================================
 # GCS HELPER FUNCTIONS
 # =============================================================================
@@ -98,18 +101,29 @@ def get_session_path(session_id):
 
 
 def load_session_from_gcs(session_id):
-    """Load session data from GCS"""
+    """Load session data from GCS (with in-memory fallback)"""
     bucket = get_gcs_bucket()
+
+    # Fallback to in-memory storage if GCS is not available
     if bucket is None:
-        return None
-    
+        data = _memory_sessions.get(session_id)
+        if data is None:
+            return None
+        # Check expiry
+        if "expires_at" in data:
+            expires_at = datetime.fromisoformat(data["expires_at"])
+            if datetime.now(timezone.utc) > expires_at:
+                delete_session_from_gcs(session_id)
+                return None
+        return data
+
     try:
         blob = bucket.blob(get_session_path(session_id))
         if not blob.exists():
             return None
-        
+
         data = json.loads(blob.download_as_text())
-        
+
         # Check expiry
         if "expires_at" in data:
             expires_at = datetime.fromisoformat(data["expires_at"])
@@ -117,7 +131,7 @@ def load_session_from_gcs(session_id):
                 # Session expired, delete it
                 delete_session_from_gcs(session_id)
                 return None
-        
+
         return data
     except Exception as e:
         print(f"[AUTH] Error loading session: {e}")
@@ -125,11 +139,14 @@ def load_session_from_gcs(session_id):
 
 
 def save_session_to_gcs(session_id, data):
-    """Save session data to GCS"""
+    """Save session data to GCS (with in-memory fallback)"""
     bucket = get_gcs_bucket()
+
+    # Fallback to in-memory storage if GCS is not available
     if bucket is None:
-        return False
-    
+        _memory_sessions[session_id] = data
+        return True
+
     try:
         blob = bucket.blob(get_session_path(session_id))
         blob.upload_from_string(
@@ -143,11 +160,15 @@ def save_session_to_gcs(session_id, data):
 
 
 def delete_session_from_gcs(session_id):
-    """Delete session from GCS"""
+    """Delete session from GCS (with in-memory fallback)"""
     bucket = get_gcs_bucket()
+
+    # Fallback to in-memory storage if GCS is not available
     if bucket is None:
-        return False
-    
+        if session_id in _memory_sessions:
+            del _memory_sessions[session_id]
+        return True
+
     try:
         blob = bucket.blob(get_session_path(session_id))
         if blob.exists():

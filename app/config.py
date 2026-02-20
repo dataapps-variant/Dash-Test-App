@@ -36,6 +36,7 @@ GCS_BQ_REFRESH_METADATA = "cache/bq_last_refresh.txt"
 GCS_GCS_REFRESH_METADATA = "cache/gcs_last_refresh.txt"
 GCS_USERS_FILE = "cache/users.json"
 GCS_SESSIONS_PREFIX = "cache/sessions/"
+GCS_AUDIT_LOG_FILE = "cache/audit_log.json"
 
 # =============================================================================
 # SESSION CONFIGURATION
