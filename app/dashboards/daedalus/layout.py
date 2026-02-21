@@ -1,13 +1,23 @@
 """
 Layout for Daedalus Dashboard
 
-16 tabs total — first 5 implemented:
-Tab 1: Daedalus
-Tab 2: Pacing by Entity
-Tab 3: CAC by Entity
-Tab 4: Current Subscriptions
-Tab 5: Daedalus (Historical)
-Tabs 6-16: Placeholder
+16 tabs total:
+Tab 1:  Daedalus
+Tab 2:  Pacing by Entity
+Tab 3:  CAC by Entity
+Tab 4:  Current Subscriptions
+Tab 5:  Daedalus (Historical)
+Tab 6:  Traffic Channel
+Tab 7:  New Users - Traffic Channel
+Tab 8:  Spend - Traffic Channel
+Tab 9:  CAC - Traffic Channel
+Tab 10: AFID Unknown
+Tab 11: Daily Report
+Tab 12: MTD Report
+Tab 13: Approval Rates
+Tab 14: Decline Reason % - App
+Tab 15: Decline Reason % - Channel
+Tab 16: Decline Reason % - AFID
 
 No company logo. Title centered. Refresh + export at top-right.
 """
@@ -18,11 +28,32 @@ import dash_bootstrap_components as dbc
 
 from app.theme import get_theme_colors
 from app.dashboards.daedalus.data import (
+    # Tabs 1-5
     get_daedalus_app_names, get_daedalus_date_range, get_available_months,
     get_cac_entity_app_names, get_cac_entity_date_range,
     get_active_subs_app_names, get_active_subs_channels, get_active_subs_date_range,
     get_daedalus_cache_info,
+    # Tabs 6-8: Traffic Channel
+    get_tc_app_names, get_tc_date_range, get_tc_channels,
+    # Tab 9: CAC Traffic Channel
+    get_cac_tc_date_range, get_cac_tc_channels,
+    # Tab 10: AFID Unknown
+    get_afid_unknown_date_range, get_afid_unknown_apps, get_afid_unknown_afids,
+    # Tab 11: Daily Report
+    get_cpa_entity_names, get_cpa_app_names, get_cpa_dates,
+    # Tab 12: MTD Report
+    get_cpa_mtd_dates, get_cpa_mtd_entity_names,
+    # Tab 13: Approval Rates
+    get_approval_date_range, get_approval_app_names,
+    get_approval_channel_names, get_approval_afids,
+    # Tab 14: Decline App
+    get_decline_app_date_range, get_decline_app_names,
+    # Tab 15: Decline Channel
+    get_decline_channel_date_range, get_decline_channel_names,
+    # Tab 16: Decline AFID
+    get_decline_afid_date_range, get_decline_afid_list,
 )
+from app.traffic_channel_map import get_all_channel_options
 
 # Tab definitions (all 16)
 TAB_DEFS = [
@@ -91,6 +122,76 @@ def create_daedalus_layout(user, theme="dark"):
     cac_apps = get_cac_entity_app_names()
     subs_apps = get_active_subs_app_names()
     subs_channels = get_active_subs_channels()
+
+    # --- Tabs 6-8: Traffic Channel ---
+    tc_min, tc_max = get_tc_date_range()
+    if tc_min is None:
+        tc_min = date(2025, 1, 1)
+    if tc_max is None:
+        tc_max = date.today()
+    tc_apps = get_tc_app_names()
+    tc_channels = get_tc_channels()
+    tc_channel_options = get_all_channel_options()
+
+    # --- Tab 9: CAC Traffic Channel ---
+    cac_tc_min, cac_tc_max = get_cac_tc_date_range()
+    if cac_tc_min is None:
+        cac_tc_min = date(2025, 1, 1)
+    if cac_tc_max is None:
+        cac_tc_max = date.today()
+    cac_tc_channels = get_cac_tc_channels()
+
+    # --- Tab 10: AFID Unknown ---
+    au_min, au_max = get_afid_unknown_date_range()
+    if au_min is None:
+        au_min = date(2025, 1, 1)
+    if au_max is None:
+        au_max = date.today()
+    au_apps = get_afid_unknown_apps()
+    au_afids = get_afid_unknown_afids()
+
+    # --- Tab 11: Daily Report ---
+    cpa_entity_names = get_cpa_entity_names()
+    cpa_app_names = get_cpa_app_names()
+    cpa_dates = get_cpa_dates()
+
+    # --- Tab 12: MTD Report ---
+    cpa_mtd_dates = get_cpa_mtd_dates()
+    cpa_mtd_entity_names = get_cpa_mtd_entity_names()
+
+    # --- Tab 13: Approval Rates ---
+    ap_min, ap_max = get_approval_date_range()
+    if ap_min is None:
+        ap_min = date(2025, 1, 1)
+    if ap_max is None:
+        ap_max = date.today()
+    ap_apps = get_approval_app_names()
+    ap_channels = get_approval_channel_names()
+    ap_afids = get_approval_afids()
+
+    # --- Tab 14: Decline App ---
+    da_min, da_max = get_decline_app_date_range()
+    if da_min is None:
+        da_min = date(2025, 1, 1)
+    if da_max is None:
+        da_max = date.today()
+    da_apps = get_decline_app_names()
+
+    # --- Tab 15: Decline Channel ---
+    dc_min, dc_max = get_decline_channel_date_range()
+    if dc_min is None:
+        dc_min = date(2025, 1, 1)
+    if dc_max is None:
+        dc_max = date.today()
+    dc_channels = get_decline_channel_names()
+
+    # --- Tab 16: Decline AFID ---
+    daf_min, daf_max = get_decline_afid_date_range()
+    if daf_min is None:
+        daf_min = date(2025, 1, 1)
+    if daf_max is None:
+        daf_max = date.today()
+    daf_afids = get_decline_afid_list()
 
     # Available months for Tab 1 & 2
     months = get_available_months()
@@ -197,6 +298,7 @@ def create_daedalus_layout(user, theme="dark"):
 
         # Available filter options (for building filter UIs in callbacks)
         dcc.Store(id="daedalus-filter-options", data={
+            # Tabs 1-5
             "daedalus_apps": daedalus_apps,
             "cac_apps": cac_apps,
             "subs_apps": subs_apps,
@@ -205,6 +307,39 @@ def create_daedalus_layout(user, theme="dark"):
             "d_min": str(d_min), "d_max": str(d_max),
             "ce_min": str(ce_min), "ce_max": str(ce_max),
             "as_min": str(as_min), "as_max": str(as_max),
+            # Tabs 6-8: Traffic Channel
+            "tc_min": str(tc_min), "tc_max": str(tc_max),
+            "tc_apps": tc_apps,
+            "tc_channels": [str(c) for c in tc_channels],
+            "tc_channel_options": tc_channel_options,
+            # Tab 9: CAC Traffic Channel
+            "cac_tc_min": str(cac_tc_min), "cac_tc_max": str(cac_tc_max),
+            "cac_tc_channels": [str(c) for c in cac_tc_channels],
+            # Tab 10: AFID Unknown
+            "au_min": str(au_min), "au_max": str(au_max),
+            "au_apps": au_apps,
+            "au_afids": au_afids,
+            # Tab 11: Daily Report
+            "cpa_entity_names": cpa_entity_names,
+            "cpa_app_names": cpa_app_names,
+            "cpa_dates": [str(d) for d in cpa_dates],
+            # Tab 12: MTD Report
+            "cpa_mtd_dates": [str(d) for d in cpa_mtd_dates],
+            "cpa_mtd_entity_names": cpa_mtd_entity_names,
+            # Tab 13: Approval Rates
+            "ap_min": str(ap_min), "ap_max": str(ap_max),
+            "ap_apps": ap_apps,
+            "ap_channels": ap_channels,
+            "ap_afids": ap_afids,
+            # Tab 14: Decline App
+            "da_min": str(da_min), "da_max": str(da_max),
+            "da_apps": da_apps,
+            # Tab 15: Decline Channel
+            "dc_min": str(dc_min), "dc_max": str(dc_max),
+            "dc_channels": dc_channels,
+            # Tab 16: Decline AFID
+            "daf_min": str(daf_min), "daf_max": str(daf_max),
+            "daf_afids": daf_afids,
         }),
 
     ], style={
