@@ -1,10 +1,24 @@
 """
 Data layer for Daedalus Dashboard
 
-Tables (first 5 tabs):
-1. Daedalus.Daedalus                - Tab 1 (Daedalus) + Tab 2 (Pacing by Entity)
-2. Daedalus.CAC_By_Entity           - Tab 3 (CAC by Entity) + Tab 5 (Historical)
-3. Daedalus.Active_Subscriptions    - Tab 4 (Current Subscriptions)
+Tables (Tabs 1-5):
+1. Daedalus.Daedalus                     - Tab 1 (Daedalus) + Tab 2 (Pacing by Entity)
+2. Daedalus.CAC_By_Entity               - Tab 3 (CAC by Entity) + Tab 5 (Historical)
+3. Daedalus.Active_Subscriptions        - Tab 4 (Current Subscriptions)
+
+Tables (Tabs 6-16):
+4.  Daedalus.Daedalus_Traffic_Channel            - Tabs 6, 7, 8
+5.  Daedalus.CAC_By_Traffic_Channel_7D           - Tab 9
+6.  Daedalus.AFID_Unknown                        - Tab 10
+7.  Daedalus.CPA_By_Entity                       - Tab 11
+8.  Daedalus.CPA                                 - Tabs 11, 12
+9.  Daedalus.CPA_By_Entity_MTD                   - Tab 12
+10. Daedalus.App_Level_Metrics                   - Tab 13
+11. Daedalus.App_Channel_Level_Metrics           - Tab 13
+12. Daedalus.App_Channel_AFID_Level_Metrics      - Tab 13
+13. Daedalus.App_Decline_Reason_Metrics          - Tab 14
+14. Daedalus.App_Channel_Decline_Reason_Metrics  - Tab 15
+15. Daedalus.App_Channel_AFID_Decline_Reason_Metrics - Tab 16
 """
 
 import pandas as pd
@@ -38,6 +52,76 @@ DAEDALUS_TABLES = {
         "bq": "variant-finance-data-project.Daedalus.Active_Subscriptions",
         "active": "daedalus_cache/active_subs_active.parquet",
         "staging": "daedalus_cache/active_subs_staging.parquet",
+    },
+    # --- Tabs 6-8: Traffic Channel ---
+    "traffic_channel": {
+        "bq": "variant-finance-data-project.Daedalus.Daedalus_Traffic_Channel",
+        "active": "daedalus_cache/traffic_channel_active.parquet",
+        "staging": "daedalus_cache/traffic_channel_staging.parquet",
+    },
+    # --- Tab 9: CAC Traffic Channel ---
+    "cac_tc_7d": {
+        "bq": "variant-finance-data-project.Daedalus.CAC_By_Traffic_Channel_7D",
+        "active": "daedalus_cache/cac_tc_7d_active.parquet",
+        "staging": "daedalus_cache/cac_tc_7d_staging.parquet",
+    },
+    # --- Tab 10: AFID Unknown ---
+    "afid_unknown": {
+        "bq": "variant-finance-data-project.Daedalus.AFID_Unknown",
+        "active": "daedalus_cache/afid_unknown_active.parquet",
+        "staging": "daedalus_cache/afid_unknown_staging.parquet",
+    },
+    # --- Tab 11: CPA By Entity ---
+    "cpa_by_entity": {
+        "bq": "variant-finance-data-project.Daedalus.CPA_By_Entity",
+        "active": "daedalus_cache/cpa_by_entity_active.parquet",
+        "staging": "daedalus_cache/cpa_by_entity_staging.parquet",
+    },
+    # --- Tabs 11-12: CPA ---
+    "cpa": {
+        "bq": "variant-finance-data-project.Daedalus.CPA",
+        "active": "daedalus_cache/cpa_active.parquet",
+        "staging": "daedalus_cache/cpa_staging.parquet",
+    },
+    # --- Tab 12: CPA By Entity MTD ---
+    "cpa_by_entity_mtd": {
+        "bq": "variant-finance-data-project.Daedalus.CPA_By_Entity_MTD",
+        "active": "daedalus_cache/cpa_by_entity_mtd_active.parquet",
+        "staging": "daedalus_cache/cpa_by_entity_mtd_staging.parquet",
+    },
+    # --- Tab 13: Approval Rates ---
+    "app_level_metrics": {
+        "bq": "variant-finance-data-project.Daedalus.App_Level_Metrics",
+        "active": "daedalus_cache/app_level_metrics_active.parquet",
+        "staging": "daedalus_cache/app_level_metrics_staging.parquet",
+    },
+    "app_channel_metrics": {
+        "bq": "variant-finance-data-project.Daedalus.App_Channel_Level_Metrics",
+        "active": "daedalus_cache/app_channel_metrics_active.parquet",
+        "staging": "daedalus_cache/app_channel_metrics_staging.parquet",
+    },
+    "app_channel_afid_metrics": {
+        "bq": "variant-finance-data-project.Daedalus.App_Channel_AFID_Level_Metrics",
+        "active": "daedalus_cache/app_channel_afid_metrics_active.parquet",
+        "staging": "daedalus_cache/app_channel_afid_metrics_staging.parquet",
+    },
+    # --- Tab 14: Decline Reason - App ---
+    "decline_app": {
+        "bq": "variant-finance-data-project.Daedalus.App_Decline_Reason_Metrics",
+        "active": "daedalus_cache/decline_app_active.parquet",
+        "staging": "daedalus_cache/decline_app_staging.parquet",
+    },
+    # --- Tab 15: Decline Reason - Channel ---
+    "decline_channel": {
+        "bq": "variant-finance-data-project.Daedalus.App_Channel_Decline_Reason_Metrics",
+        "active": "daedalus_cache/decline_channel_active.parquet",
+        "staging": "daedalus_cache/decline_channel_staging.parquet",
+    },
+    # --- Tab 16: Decline Reason - AFID ---
+    "decline_afid": {
+        "bq": "variant-finance-data-project.Daedalus.App_Channel_AFID_Decline_Reason_Metrics",
+        "active": "daedalus_cache/decline_afid_active.parquet",
+        "staging": "daedalus_cache/decline_afid_staging.parquet",
     },
 }
 
@@ -754,3 +838,775 @@ def get_historical_spend_split(app_names, start_date, end_date):
     grouped = filtered.groupby("App_Name", as_index=False)["Daily_Spend"].sum()
     grouped = grouped[grouped["Daily_Spend"] > 0]
     return grouped.sort_values("Daily_Spend", ascending=False)
+
+
+# =============================================================================
+# TABS 6-8: TRAFFIC CHANNEL — Filter Helpers
+# =============================================================================
+
+def get_tc_app_names():
+    """Get unique App_Name values from traffic_channel table"""
+    df = _get_df("traffic_channel")
+    if df.empty or "App_Name" not in df.columns:
+        return []
+    return sorted(df["App_Name"].dropna().unique().tolist())
+
+
+def get_tc_date_range():
+    df = _get_df("traffic_channel")
+    if df.empty or "Date" not in df.columns:
+        return None, None
+    dates = pd.to_datetime(df["Date"], errors="coerce").dropna()
+    if dates.empty:
+        return None, None
+    return dates.min().date(), dates.max().date()
+
+
+def get_tc_channels():
+    """Get unique Traffic_Channel integer IDs from traffic_channel table"""
+    df = _get_df("traffic_channel")
+    if df.empty or "Traffic_Channel" not in df.columns:
+        return []
+    return sorted(df["Traffic_Channel"].dropna().unique().tolist())
+
+
+# =============================================================================
+# TAB 6: TRAFFIC CHANNEL — Data Retrieval
+# =============================================================================
+
+def get_tc_lines_by_app(start_date, end_date, channels, metric_col):
+    """Tab 6: Returns dict {app_name: DataFrame(Date, Traffic_Channel, value)}
+    metric_col = 'T30D_Spend' or 'T30D_Users'
+    """
+    df = _get_df("traffic_channel")
+    if df.empty:
+        return {}
+    df = _ensure_date_col(df.copy())
+    mask = (
+        (df["Date"] >= pd.Timestamp(start_date)) &
+        (df["Date"] <= pd.Timestamp(end_date)) &
+        (df["Traffic_Channel"].isin(channels))
+    )
+    filtered = df.loc[mask]
+    if filtered.empty:
+        return {}
+
+    result = {}
+    # VG first if present
+    apps = sorted(filtered["App_Name"].unique())
+    if "VG" in apps:
+        apps = ["VG"] + [a for a in apps if a != "VG"]
+
+    for app in apps:
+        adf = filtered[filtered["App_Name"] == app].copy()
+        grouped = adf.groupby(["Date", "Traffic_Channel"], as_index=False)[metric_col].sum()
+        grouped.rename(columns={metric_col: "value"}, inplace=True)
+        grouped = grouped.sort_values(["Traffic_Channel", "Date"])
+        # Only include channels that have data
+        grouped = grouped[grouped["value"].notna()]
+        if not grouped.empty:
+            result[app] = grouped
+
+    return result
+
+
+# =============================================================================
+# TABS 7-8: NEW USERS / SPEND — Traffic Channel (Pie + Stacked Area)
+# =============================================================================
+
+def get_tc_pie_by_app(start_date, end_date, channels, metric_col):
+    """Tabs 7/8: Returns dict {app_name: DataFrame(Traffic_Channel, total)}
+    metric_col = 'Daily_New_Users' or 'Daily_Spend'
+    """
+    df = _get_df("traffic_channel")
+    if df.empty:
+        return {}
+    df = _ensure_date_col(df.copy())
+    mask = (
+        (df["Date"] >= pd.Timestamp(start_date)) &
+        (df["Date"] <= pd.Timestamp(end_date)) &
+        (df["Traffic_Channel"].isin(channels))
+    )
+    filtered = df.loc[mask]
+    if filtered.empty:
+        return {}
+
+    result = {}
+    apps = sorted(filtered["App_Name"].unique())
+    if "VG" in apps:
+        apps = ["VG"] + [a for a in apps if a != "VG"]
+
+    for app in apps:
+        adf = filtered[filtered["App_Name"] == app]
+        grouped = adf.groupby("Traffic_Channel", as_index=False)[metric_col].sum()
+        grouped.rename(columns={metric_col: "total"}, inplace=True)
+        grouped = grouped[grouped["total"] > 0]
+        if not grouped.empty:
+            result[app] = grouped.sort_values("total", ascending=False)
+
+    return result
+
+
+def get_tc_stacked_by_app(start_date, end_date, channels, metric_col):
+    """Tabs 7/8: Returns dict {app_name: DataFrame(Date, Traffic_Channel, value)}
+    For stacked area chart. metric_col = 'Daily_New_Users' or 'Daily_Spend'
+    """
+    df = _get_df("traffic_channel")
+    if df.empty:
+        return {}
+    df = _ensure_date_col(df.copy())
+    mask = (
+        (df["Date"] >= pd.Timestamp(start_date)) &
+        (df["Date"] <= pd.Timestamp(end_date)) &
+        (df["Traffic_Channel"].isin(channels))
+    )
+    filtered = df.loc[mask]
+    if filtered.empty:
+        return {}
+
+    result = {}
+    apps = sorted(filtered["App_Name"].unique())
+    if "VG" in apps:
+        apps = ["VG"] + [a for a in apps if a != "VG"]
+
+    for app in apps:
+        adf = filtered[filtered["App_Name"] == app]
+        grouped = adf.groupby(["Date", "Traffic_Channel"], as_index=False)[metric_col].sum()
+        grouped.rename(columns={metric_col: "value"}, inplace=True)
+        grouped = grouped.sort_values(["Traffic_Channel", "Date"])
+        if not grouped.empty:
+            result[app] = grouped
+
+    return result
+
+
+# =============================================================================
+# TAB 9: CAC - TRAFFIC CHANNEL
+# =============================================================================
+
+def get_cac_tc_date_range():
+    df = _get_df("cac_tc_7d")
+    if df.empty or "Date" not in df.columns:
+        return None, None
+    dates = pd.to_datetime(df["Date"], errors="coerce").dropna()
+    if dates.empty:
+        return None, None
+    return dates.min().date(), dates.max().date()
+
+
+def get_cac_tc_channels():
+    df = _get_df("cac_tc_7d")
+    if df.empty or "Traffic_Channel" not in df.columns:
+        return []
+    return sorted(df["Traffic_Channel"].dropna().unique().tolist())
+
+
+def get_cac_tc_by_app(start_date, end_date, channels, metrics):
+    """Tab 9: Returns dict {app_name: DataFrame(Date, Traffic_Channel, [Daily_CAC, T7D_CAC])}
+    metrics = list of column names to include, e.g. ['Daily_CAC', 'T7D_CAC']
+    """
+    df = _get_df("cac_tc_7d")
+    if df.empty:
+        return {}
+    df = _ensure_date_col(df.copy())
+    mask = (
+        (df["Date"] >= pd.Timestamp(start_date)) &
+        (df["Date"] <= pd.Timestamp(end_date)) &
+        (df["Traffic_Channel"].isin(channels))
+    )
+    filtered = df.loc[mask]
+    if filtered.empty:
+        return {}
+
+    cols_needed = ["Date", "Traffic_Channel"] + [m for m in metrics if m in filtered.columns]
+    result = {}
+    apps = sorted(filtered["App_Name"].unique())
+    if "VG" in apps:
+        apps = ["VG"] + [a for a in apps if a != "VG"]
+
+    for app in apps:
+        adf = filtered[filtered["App_Name"] == app][cols_needed].copy()
+        agg_dict = {m: "mean" for m in metrics if m in adf.columns}
+        grouped = adf.groupby(["Date", "Traffic_Channel"], as_index=False).agg(agg_dict)
+        grouped = grouped.sort_values(["Traffic_Channel", "Date"])
+        if not grouped.empty:
+            result[app] = grouped
+
+    return result
+
+
+# =============================================================================
+# TAB 10: AFID UNKNOWN
+# =============================================================================
+
+def get_afid_unknown_date_range():
+    df = _get_df("afid_unknown")
+    if df.empty or "Date" not in df.columns:
+        return None, None
+    dates = pd.to_datetime(df["Date"], errors="coerce").dropna()
+    if dates.empty:
+        return None, None
+    return dates.min().date(), dates.max().date()
+
+
+def get_afid_unknown_apps():
+    df = _get_df("afid_unknown")
+    if df.empty or "App_Name" not in df.columns:
+        return []
+    return sorted(df["App_Name"].dropna().unique().tolist())
+
+
+def get_afid_unknown_afids():
+    df = _get_df("afid_unknown")
+    if df.empty or "AFID" not in df.columns:
+        return []
+    return sorted(df["AFID"].dropna().unique().tolist())
+
+
+def get_afid_unknown_pie(app_names, afids, start_date, end_date):
+    """Tab 10 Chart 1: Pie — SUM(New_Users) per AFID over date range"""
+    df = _get_df("afid_unknown")
+    if df.empty:
+        return pd.DataFrame()
+    df = _ensure_date_col(df.copy())
+    mask = (
+        (df["App_Name"].isin(app_names)) &
+        (df["AFID"].isin(afids)) &
+        (df["Date"] >= pd.Timestamp(start_date)) &
+        (df["Date"] <= pd.Timestamp(end_date))
+    )
+    filtered = df.loc[mask]
+    if filtered.empty:
+        return pd.DataFrame()
+
+    grouped = filtered.groupby("AFID", as_index=False)["New_Users"].sum()
+    grouped = grouped[grouped["New_Users"] > 0]
+    return grouped.sort_values("New_Users", ascending=False)
+
+
+def get_afid_unknown_stacked(app_names, afids, start_date, end_date):
+    """Tab 10 Chart 2: Stacked Area — New_Users per date per AFID"""
+    df = _get_df("afid_unknown")
+    if df.empty:
+        return pd.DataFrame()
+    df = _ensure_date_col(df.copy())
+    mask = (
+        (df["App_Name"].isin(app_names)) &
+        (df["AFID"].isin(afids)) &
+        (df["Date"] >= pd.Timestamp(start_date)) &
+        (df["Date"] <= pd.Timestamp(end_date))
+    )
+    filtered = df.loc[mask]
+    if filtered.empty:
+        return pd.DataFrame()
+
+    grouped = filtered.groupby(["Date", "AFID"], as_index=False)["New_Users"].sum()
+    return grouped.sort_values(["AFID", "Date"])
+
+
+# =============================================================================
+# TAB 11: DAILY REPORT
+# =============================================================================
+
+def get_cpa_entity_names():
+    """Get unique Entity_Name values from CPA_By_Entity"""
+    df = _get_df("cpa_by_entity")
+    if df.empty or "Entity_Name" not in df.columns:
+        return []
+    return sorted(df["Entity_Name"].dropna().unique().tolist())
+
+
+def get_cpa_app_names():
+    """Get unique App_Name values from CPA table"""
+    df = _get_df("cpa")
+    if df.empty or "App_Name" not in df.columns:
+        return []
+    return sorted(df["App_Name"].dropna().unique().tolist())
+
+
+def get_cpa_dates():
+    """Get sorted dates from CPA_By_Entity for date picker"""
+    df = _get_df("cpa_by_entity")
+    if df.empty or "Date" not in df.columns:
+        return []
+    dates = pd.to_datetime(df["Date"], errors="coerce").dropna()
+    if dates.empty:
+        return []
+    return sorted(dates.dt.date.unique().tolist(), reverse=True)
+
+
+def get_cpa_by_entity_daily(selected_date):
+    """Tab 11 Table 1: CPA By Entity — filter by date only"""
+    df = _get_df("cpa_by_entity")
+    if df.empty:
+        return pd.DataFrame()
+    df = _ensure_date_col(df.copy())
+    filtered = df[df["Date"] == pd.Timestamp(selected_date)].copy()
+    if filtered.empty:
+        return pd.DataFrame()
+
+    result = filtered[["Entity_Name", "Daily_Total_Users", "Daily_New_Regular_Users",
+                        "Daily_Subscriptions", "Daily_SS_Users", "Daily_Spend", "Daily_CAC"]].copy()
+    result = result.rename(columns={
+        "Entity_Name": "Entity",
+        "Daily_Total_Users": "Total",
+        "Daily_New_Regular_Users": "Trials",
+        "Daily_Subscriptions": "New Subscriptions",
+        "Daily_SS_Users": "Single Sale",
+        "Daily_Spend": "AD Spend",
+        "Daily_CAC": "CAC",
+    })
+
+    # Total row
+    total_row = {
+        "Entity": "Total",
+        "Total": result["Total"].sum(),
+        "Trials": result["Trials"].sum(),
+        "New Subscriptions": result["New Subscriptions"].sum(),
+        "Single Sale": result["Single Sale"].sum(),
+        "AD Spend": result["AD Spend"].sum(),
+        "CAC": None,
+    }
+    total_users = total_row["Total"]
+    total_spend = total_row["AD Spend"]
+    total_row["CAC"] = (total_spend / total_users) if total_users > 0 else 0
+    result = pd.concat([result, pd.DataFrame([total_row])], ignore_index=True)
+    return result
+
+
+def get_cpa_by_application_daily(selected_date, entity_names, app_names):
+    """Tab 11 Table 2: CPA By Application — filter by date + entity + app"""
+    df = _get_df("cpa")
+    if df.empty:
+        return pd.DataFrame()
+    df["Report_Date"] = pd.to_datetime(df["Report_Date"], errors="coerce")
+    mask = (
+        (df["Report_Date"] == pd.Timestamp(selected_date)) &
+        (df["Entity_Name"].isin(entity_names)) &
+        (df["App_Name"].isin(app_names))
+    )
+    filtered = df.loc[mask].copy()
+    if filtered.empty:
+        return pd.DataFrame()
+
+    result = filtered[["Entity_Name", "App_Name", "Channel_Name",
+                        "Total", "Trial_Users", "New_Subs_Users",
+                        "Single_Sale_Users", "Ad_Spend", "CAC"]].copy()
+    result = result.rename(columns={
+        "Entity_Name": "Entity",
+        "App_Name": "App",
+        "Channel_Name": "Source System",
+        "Trial_Users": "Trials",
+        "New_Subs_Users": "New Subscriptions",
+        "Single_Sale_Users": "Single Sale",
+        "Ad_Spend": "AD Spend",
+    })
+
+    # Total row
+    total_row = {
+        "Entity": "Total", "App": "", "Source System": "",
+        "Total": result["Total"].sum(),
+        "Trials": result["Trials"].sum(),
+        "New Subscriptions": result["New Subscriptions"].sum(),
+        "Single Sale": result["Single Sale"].sum(),
+        "AD Spend": result["AD Spend"].sum(),
+        "CAC": None,
+    }
+    total_users = total_row["Total"]
+    total_spend = total_row["AD Spend"]
+    total_row["CAC"] = (total_spend / total_users) if total_users > 0 else 0
+    result = pd.concat([result, pd.DataFrame([total_row])], ignore_index=True)
+    return result
+
+
+# =============================================================================
+# TAB 12: MTD REPORT
+# =============================================================================
+
+def get_cpa_mtd_dates():
+    """Get sorted dates from CPA_By_Entity_MTD"""
+    df = _get_df("cpa_by_entity_mtd")
+    if df.empty or "Date" not in df.columns:
+        return []
+    dates = pd.to_datetime(df["Date"], errors="coerce").dropna()
+    if dates.empty:
+        return []
+    return sorted(dates.dt.date.unique().tolist(), reverse=True)
+
+
+def get_cpa_mtd_entity_names():
+    df = _get_df("cpa_by_entity_mtd")
+    if df.empty or "Entity_Name" not in df.columns:
+        return []
+    return sorted(df["Entity_Name"].dropna().unique().tolist())
+
+
+def get_cpa_by_entity_mtd(selected_date):
+    """Tab 12 Table 1: CPA By Entity (MTD)"""
+    df = _get_df("cpa_by_entity_mtd")
+    if df.empty:
+        return pd.DataFrame()
+    df = _ensure_date_col(df.copy())
+    filtered = df[df["Date"] == pd.Timestamp(selected_date)].copy()
+    if filtered.empty:
+        return pd.DataFrame()
+
+    result = filtered[["Entity_Name", "MTD_Total_Users", "MTD_New_Regular_Users",
+                        "MTD_Subscriptions", "MTD_SS_Users", "MTD_Spend", "MTD_CAC"]].copy()
+    result = result.rename(columns={
+        "Entity_Name": "Entity",
+        "MTD_Total_Users": "Total",
+        "MTD_New_Regular_Users": "Trials",
+        "MTD_Subscriptions": "New Subscriptions",
+        "MTD_SS_Users": "Single Sale",
+        "MTD_Spend": "AD Spend",
+        "MTD_CAC": "CAC",
+    })
+
+    # Total row
+    total_row = {
+        "Entity": "Total",
+        "Total": result["Total"].sum(),
+        "Trials": result["Trials"].sum(),
+        "New Subscriptions": result["New Subscriptions"].sum(),
+        "Single Sale": result["Single Sale"].sum(),
+        "AD Spend": result["AD Spend"].sum(),
+        "CAC": None,
+    }
+    total_users = total_row["Total"]
+    total_spend = total_row["AD Spend"]
+    total_row["CAC"] = (total_spend / total_users) if total_users > 0 else 0
+    result = pd.concat([result, pd.DataFrame([total_row])], ignore_index=True)
+    return result
+
+
+def get_cpa_by_application_mtd(selected_date, entity_names, app_names):
+    """Tab 12 Table 2: CPA By Application (MTD)"""
+    df = _get_df("cpa")
+    if df.empty:
+        return pd.DataFrame()
+    df["Report_Date"] = pd.to_datetime(df["Report_Date"], errors="coerce")
+    mask = (
+        (df["Report_Date"] == pd.Timestamp(selected_date)) &
+        (df["Entity_Name"].isin(entity_names)) &
+        (df["App_Name"].isin(app_names))
+    )
+    filtered = df.loc[mask].copy()
+    if filtered.empty:
+        return pd.DataFrame()
+
+    result = filtered[["Entity_Name", "App_Name", "Channel_Name",
+                        "Total_MTD", "Trial_Users_MTD", "New_Subs_Users_MTD",
+                        "Single_Sale_Users_MTD", "Ad_Spend_MTD", "CAC_MTD"]].copy()
+    result = result.rename(columns={
+        "Entity_Name": "Entity",
+        "App_Name": "App",
+        "Channel_Name": "Source System",
+        "Total_MTD": "Total",
+        "Trial_Users_MTD": "Trials",
+        "New_Subs_Users_MTD": "New Subscriptions",
+        "Single_Sale_Users_MTD": "Single Sale",
+        "Ad_Spend_MTD": "AD Spend",
+        "CAC_MTD": "CAC",
+    })
+
+    # Total row
+    total_row = {
+        "Entity": "Total", "App": "", "Source System": "",
+        "Total": result["Total"].sum(),
+        "Trials": result["Trials"].sum(),
+        "New Subscriptions": result["New Subscriptions"].sum(),
+        "Single Sale": result["Single Sale"].sum(),
+        "AD Spend": result["AD Spend"].sum(),
+        "CAC": None,
+    }
+    total_users = total_row["Total"]
+    total_spend = total_row["AD Spend"]
+    total_row["CAC"] = (total_spend / total_users) if total_users > 0 else 0
+    result = pd.concat([result, pd.DataFrame([total_row])], ignore_index=True)
+    return result
+
+
+# =============================================================================
+# TAB 13: APPROVAL RATES
+# =============================================================================
+
+def get_approval_date_range():
+    df = _get_df("app_level_metrics")
+    if df.empty or "Report_Date" not in df.columns:
+        return None, None
+    dates = pd.to_datetime(df["Report_Date"], errors="coerce").dropna()
+    if dates.empty:
+        return None, None
+    return dates.min().date(), dates.max().date()
+
+
+def get_approval_app_names():
+    df = _get_df("app_level_metrics")
+    if df.empty or "App_Name" not in df.columns:
+        return []
+    return sorted(df["App_Name"].dropna().unique().tolist())
+
+
+def get_approval_channel_names():
+    df = _get_df("app_channel_metrics")
+    if df.empty or "Channel_Name" not in df.columns:
+        return []
+    return sorted(df["Channel_Name"].dropna().unique().tolist())
+
+
+def get_approval_afids():
+    df = _get_df("app_channel_afid_metrics")
+    if df.empty or "AFID" not in df.columns:
+        return []
+    return sorted(df["AFID"].dropna().unique().tolist())
+
+
+def get_app_approval_rates(app_names, start_date, end_date):
+    """Tab 13 Chart 1: App-level approval rates.
+    Returns dict with 'per_app' and 'total' DataFrames.
+    per_app: Report_Date, App_Name, CIT_Percent, MIT_Percent
+    total: Report_Date, CIT_Percent, MIT_Percent (aggregated)
+    """
+    df = _get_df("app_level_metrics")
+    if df.empty:
+        return {}
+    df["Report_Date"] = pd.to_datetime(df["Report_Date"], errors="coerce")
+    mask = (
+        (df["App_Name"].isin(app_names)) &
+        (df["Report_Date"] >= pd.Timestamp(start_date)) &
+        (df["Report_Date"] <= pd.Timestamp(end_date))
+    )
+    filtered = df.loc[mask]
+    if filtered.empty:
+        return {}
+
+    per_app = filtered[["Report_Date", "App_Name", "CIT_Percent", "MIT_Percent"]].copy()
+    per_app = per_app.sort_values(["App_Name", "Report_Date"])
+
+    # Total: SUM(CIT_Approved)/SUM(CIT_Total) per date
+    totals = filtered.groupby("Report_Date", as_index=False).agg(
+        CIT_Approved=("CIT_Approved", "sum"),
+        CIT_Total=("CIT_Total", "sum"),
+        MIT_Approved=("MIT_Approved", "sum"),
+        MIT_Total=("MIT_Total", "sum"),
+    )
+    totals["CIT_Percent"] = np.where(totals["CIT_Total"] > 0,
+                                      totals["CIT_Approved"] / totals["CIT_Total"], np.nan)
+    totals["MIT_Percent"] = np.where(totals["MIT_Total"] > 0,
+                                      totals["MIT_Approved"] / totals["MIT_Total"], np.nan)
+    totals = totals[["Report_Date", "CIT_Percent", "MIT_Percent"]].sort_values("Report_Date")
+
+    return {"per_app": per_app, "total": totals}
+
+
+def get_channel_approval_rates(app_names, channel_names, start_date, end_date):
+    """Tab 13 Chart 2: Channel-level approval rates."""
+    df = _get_df("app_channel_metrics")
+    if df.empty:
+        return {}
+    df["Report_Date"] = pd.to_datetime(df["Report_Date"], errors="coerce")
+    mask = (
+        (df["App_Name"].isin(app_names)) &
+        (df["Channel_Name"].isin(channel_names)) &
+        (df["Report_Date"] >= pd.Timestamp(start_date)) &
+        (df["Report_Date"] <= pd.Timestamp(end_date))
+    )
+    filtered = df.loc[mask]
+    if filtered.empty:
+        return {}
+
+    # Per channel: aggregate across selected apps
+    per_channel = filtered.groupby(["Report_Date", "Channel_Name"], as_index=False).agg(
+        CIT_Approved=("CIT_Approved", "sum"),
+        CIT_Total=("CIT_Total", "sum"),
+        MIT_Approved=("MIT_Approved", "sum"),
+        MIT_Total=("MIT_Total", "sum"),
+    )
+    per_channel["CIT_Percent"] = np.where(per_channel["CIT_Total"] > 0,
+                                           per_channel["CIT_Approved"] / per_channel["CIT_Total"], np.nan)
+    per_channel["MIT_Percent"] = np.where(per_channel["MIT_Total"] > 0,
+                                           per_channel["MIT_Approved"] / per_channel["MIT_Total"], np.nan)
+    per_channel = per_channel.sort_values(["Channel_Name", "Report_Date"])
+
+    # Total
+    totals = filtered.groupby("Report_Date", as_index=False).agg(
+        CIT_Approved=("CIT_Approved", "sum"),
+        CIT_Total=("CIT_Total", "sum"),
+        MIT_Approved=("MIT_Approved", "sum"),
+        MIT_Total=("MIT_Total", "sum"),
+    )
+    totals["CIT_Percent"] = np.where(totals["CIT_Total"] > 0,
+                                      totals["CIT_Approved"] / totals["CIT_Total"], np.nan)
+    totals["MIT_Percent"] = np.where(totals["MIT_Total"] > 0,
+                                      totals["MIT_Approved"] / totals["MIT_Total"], np.nan)
+    totals = totals[["Report_Date", "CIT_Percent", "MIT_Percent"]].sort_values("Report_Date")
+
+    return {"per_channel": per_channel, "total": totals}
+
+
+def get_afid_approval_rates(app_names, afids, start_date, end_date):
+    """Tab 13 Chart 3: AFID-level approval rates."""
+    df = _get_df("app_channel_afid_metrics")
+    if df.empty:
+        return {}
+    df["Report_Date"] = pd.to_datetime(df["Report_Date"], errors="coerce")
+    mask = (
+        (df["App_Name"].isin(app_names)) &
+        (df["AFID"].isin(afids)) &
+        (df["Report_Date"] >= pd.Timestamp(start_date)) &
+        (df["Report_Date"] <= pd.Timestamp(end_date))
+    )
+    filtered = df.loc[mask]
+    if filtered.empty:
+        return {}
+
+    # Per AFID: aggregate across selected apps
+    per_afid = filtered.groupby(["Report_Date", "AFID"], as_index=False).agg(
+        CIT_Approved=("CIT_Approved", "sum"),
+        CIT_Total=("CIT_Total", "sum"),
+        MIT_Approved=("MIT_Approved", "sum"),
+        MIT_Total=("MIT_Total", "sum"),
+    )
+    per_afid["CIT_Percent"] = np.where(per_afid["CIT_Total"] > 0,
+                                        per_afid["CIT_Approved"] / per_afid["CIT_Total"], np.nan)
+    per_afid["MIT_Percent"] = np.where(per_afid["MIT_Total"] > 0,
+                                        per_afid["MIT_Approved"] / per_afid["MIT_Total"], np.nan)
+    per_afid = per_afid.sort_values(["AFID", "Report_Date"])
+
+    # Total
+    totals = filtered.groupby("Report_Date", as_index=False).agg(
+        CIT_Approved=("CIT_Approved", "sum"),
+        CIT_Total=("CIT_Total", "sum"),
+        MIT_Approved=("MIT_Approved", "sum"),
+        MIT_Total=("MIT_Total", "sum"),
+    )
+    totals["CIT_Percent"] = np.where(totals["CIT_Total"] > 0,
+                                      totals["CIT_Approved"] / totals["CIT_Total"], np.nan)
+    totals["MIT_Percent"] = np.where(totals["MIT_Total"] > 0,
+                                      totals["MIT_Approved"] / totals["MIT_Total"], np.nan)
+    totals = totals[["Report_Date", "CIT_Percent", "MIT_Percent"]].sort_values("Report_Date")
+
+    return {"per_afid": per_afid, "total": totals}
+
+
+# =============================================================================
+# TABS 14-16: DECLINE REASON %
+# =============================================================================
+
+def get_decline_app_date_range():
+    df = _get_df("decline_app")
+    if df.empty or "Report_Date" not in df.columns:
+        return None, None
+    dates = pd.to_datetime(df["Report_Date"], errors="coerce").dropna()
+    if dates.empty:
+        return None, None
+    return dates.min().date(), dates.max().date()
+
+
+def get_decline_app_names():
+    df = _get_df("decline_app")
+    if df.empty or "App_Name" not in df.columns:
+        return []
+    return sorted(df["App_Name"].dropna().unique().tolist())
+
+
+def get_decline_channel_names():
+    df = _get_df("decline_channel")
+    if df.empty or "Channel_Name" not in df.columns:
+        return []
+    return sorted(df["Channel_Name"].dropna().unique().tolist())
+
+
+def get_decline_channel_date_range():
+    df = _get_df("decline_channel")
+    if df.empty or "Report_Date" not in df.columns:
+        return None, None
+    dates = pd.to_datetime(df["Report_Date"], errors="coerce").dropna()
+    if dates.empty:
+        return None, None
+    return dates.min().date(), dates.max().date()
+
+
+def get_decline_afid_list():
+    df = _get_df("decline_afid")
+    if df.empty or "AFID" not in df.columns:
+        return []
+    return sorted(df["AFID"].dropna().unique().tolist())
+
+
+def get_decline_afid_date_range():
+    df = _get_df("decline_afid")
+    if df.empty or "Report_Date" not in df.columns:
+        return None, None
+    dates = pd.to_datetime(df["Report_Date"], errors="coerce").dropna()
+    if dates.empty:
+        return None, None
+    return dates.min().date(), dates.max().date()
+
+
+def _get_decline_data(cache_key, app_names, start_date, end_date,
+                      channel_names=None, afids=None, threshold=0):
+    """Generic decline reason data for Tabs 14/15/16.
+    Returns dict with 'cit' and 'mit' DataFrames:
+    Each has: Report_Date, Final_Category, pct
+    Threshold removes categories on per-date basis.
+    """
+    df = _get_df(cache_key)
+    if df.empty:
+        return {}
+    df["Report_Date"] = pd.to_datetime(df["Report_Date"], errors="coerce")
+    mask = (
+        (df["App_Name"].isin(app_names)) &
+        (df["Report_Date"] >= pd.Timestamp(start_date)) &
+        (df["Report_Date"] <= pd.Timestamp(end_date))
+    )
+    if channel_names is not None and "Channel_Name" in df.columns:
+        mask = mask & (df["Channel_Name"].isin(channel_names))
+    if afids is not None and "AFID" in df.columns:
+        mask = mask & (df["AFID"].isin(afids))
+
+    filtered = df.loc[mask]
+    if filtered.empty:
+        return {}
+
+    result = {}
+    for prefix, count_col, total_col in [
+        ("cit", "CIT_Decline_Count", "CIT_Total_Declines"),
+        ("mit", "MIT_Decline_Count", "MIT_Total_Declines"),
+    ]:
+        agg = filtered.groupby(["Report_Date", "Final_Category"], as_index=False).agg(
+            count=(count_col, "sum"),
+            total=(total_col, "sum"),
+        )
+        # Compute per-date total for percentage
+        date_totals = agg.groupby("Report_Date", as_index=False)["count"].sum()
+        date_totals.rename(columns={"count": "date_total"}, inplace=True)
+        agg = agg.merge(date_totals, on="Report_Date")
+        agg["pct"] = np.where(agg["date_total"] > 0,
+                               agg["count"] / agg["date_total"] * 100, 0)
+        # Apply threshold: remove categories per-date where pct < threshold
+        if threshold > 0:
+            agg = agg[agg["pct"] >= threshold]
+        agg = agg[["Report_Date", "Final_Category", "pct"]].sort_values(["Report_Date", "Final_Category"])
+        result[prefix] = agg
+
+    return result
+
+
+def get_decline_app_data(app_names, start_date, end_date, threshold=0):
+    """Tab 14: Decline Reason % - App"""
+    return _get_decline_data("decline_app", app_names, start_date, end_date,
+                             threshold=threshold)
+
+
+def get_decline_channel_data(app_names, channel_names, start_date, end_date, threshold=0):
+    """Tab 15: Decline Reason % - Channel"""
+    return _get_decline_data("decline_channel", app_names, start_date, end_date,
+                             channel_names=channel_names, threshold=threshold)
+
+
+def get_decline_afid_data(app_names, channel_names, afids, start_date, end_date, threshold=0):
+    """Tab 16: Decline Reason % - AFID"""
+    return _get_decline_data("decline_afid", app_names, start_date, end_date,
+                             channel_names=channel_names, afids=afids, threshold=threshold)
